@@ -182,15 +182,20 @@ const getOptimizedWaffleRoute = async (
 
     // Decode the route geometry (encoded polyline)
     let routeGeometry: [number, number][] = [];
+    console.log("Route response:", route);
+    console.log("Route geometry available:", !!route.geometry);
+
     if (route.geometry) {
       try {
         // Decode the polyline geometry from OpenRouteService
         const decodedGeometry = decodePolyline(route.geometry);
+        console.log("Decoded geometry points:", decodedGeometry.length);
         // Convert [lng, lat] to [lat, lng] for Leaflet
         routeGeometry = decodedGeometry.map((coord): [number, number] => [
           coord[1],
           coord[0],
         ]);
+        console.log("Final route geometry points:", routeGeometry.length);
       } catch (geometryError) {
         console.warn("Could not decode route geometry:", geometryError);
         // Fallback to simple point-to-point geometry
@@ -201,6 +206,15 @@ const getOptimizedWaffleRoute = async (
           ),
         ];
       }
+    } else {
+      console.warn("No geometry returned from optimization API");
+      // Fallback to simple point-to-point geometry
+      routeGeometry = [
+        [start[0], start[1]], // Start point
+        ...optimizedRoute.map(
+          (wh) => [wh.latitude, wh.longitude] as [number, number]
+        ),
+      ];
     }
 
     return {
@@ -476,9 +490,16 @@ const WaffleMap: React.FC = () => {
           });
 
           // Use the optimized route geometry if available, otherwise get detailed route
+          console.log(
+            "Route geometry from optimization:",
+            routeGeometry.length,
+            "points"
+          );
           if (routeGeometry.length > 0) {
             setRealRouteCoordinates(routeGeometry);
+            console.log("Using optimization route geometry");
           } else {
+            console.log("No optimization geometry, fetching detailed route");
             await fetchRealRoute(lat, lng, optimizedRoute);
           }
         } else {
