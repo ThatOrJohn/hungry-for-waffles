@@ -154,7 +154,12 @@ const getOptimizedWaffleRoute = async (
   try {
     const response = await axios.post<ORSOptimizationResponse>(
       "https://api.openrouteservice.org/optimization",
-      requestBody,
+      {
+        ...requestBody,
+        options: {
+          g: true, // Include geometry
+        },
+      },
       {
         headers: {
           Authorization: apiKey,
