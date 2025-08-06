@@ -737,11 +737,13 @@ const WaffleMap: React.FC = () => {
   // Force map resize after component mounts to fix rendering issues
   useEffect(() => {
     if (mapRef.current) {
-      // Small delay to ensure DOM is ready
-      const timer = setTimeout(() => {
-        mapRef.current?.invalidateSize();
-      }, 100);
-      return () => clearTimeout(timer);
+      // Multiple attempts to ensure map renders properly
+      const timers = [
+        setTimeout(() => mapRef.current?.invalidateSize(), 100),
+        setTimeout(() => mapRef.current?.invalidateSize(), 500),
+        setTimeout(() => mapRef.current?.invalidateSize(), 1000),
+      ];
+      return () => timers.forEach((timer) => clearTimeout(timer));
     }
   }, []);
 
@@ -761,6 +763,16 @@ const WaffleMap: React.FC = () => {
       window.removeEventListener("orientationchange", handleResize);
     };
   }, []);
+
+  // Force map resize when route details expand/collapse
+  useEffect(() => {
+    if (mapRef.current) {
+      const timer = setTimeout(() => {
+        mapRef.current?.invalidateSize();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isRouteDetailsExpanded]);
 
   const currentCenter: [number, number] = userLocation
     ? [userLocation.lat, userLocation.lng]
