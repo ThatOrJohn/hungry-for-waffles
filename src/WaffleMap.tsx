@@ -901,6 +901,14 @@ const WaffleMap: React.FC = () => {
         {/* Route Polyline */}
         {route.length > 0 && userLocation && (
           <>
+            {/* Debug info */}
+            {console.log(
+              "Rendering route - realRouteCoordinates:",
+              realRouteCoordinates.length,
+              "points",
+              "First 3 coords:",
+              realRouteCoordinates.slice(0, 3)
+            )}
             {/* Real road route from OpenRouteService */}
             {realRouteCoordinates.length > 0 && (
               <Polyline
