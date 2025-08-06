@@ -45,7 +45,7 @@
 /* Mobile-specific map fixes */
 @media (max-width: 768px) {
   .leaflet-container {
-    height: calc(100vh - 140px) !important;
+    height: 100% !important;
     min-height: 40vh !important;
   }
 
@@ -71,18 +71,23 @@
     max-height: 100vh !important;
     overflow: hidden !important;
   }
+
+  /* Ensure route footer is always visible */
+  .lg\\:hidden.flex-shrink-0 {
+    min-height: 60px !important;
+    z-index: 30 !important;
+  }
 }
 
 /* iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
   .leaflet-container {
-    height: -webkit-fill-available !important;
+    height: 100% !important;
     min-height: 40vh !important;
   }
 
   /* Ensure map container has height on iOS */
   .flex-1.relative.min-h-0 {
-    height: calc(100vh - 140px) !important;
     min-height: 40vh !important;
   }
 }

@@ -1200,7 +1200,7 @@ const WaffleMap: React.FC = () => {
 
             {/* Mobile Bottom Route Info */}
             {route.length > 0 && (
-              <div className="lg:hidden flex-shrink-0">
+              <div className="lg:hidden flex-shrink-0 bg-white border-t border-gray-200">
                 <div className="bg-white border-t border-gray-200 shadow-lg">
                   {/* Route Summary Bar */}
                   <div className="flex items-center justify-between p-3 border-b border-gray-100">
