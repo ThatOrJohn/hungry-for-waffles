@@ -779,7 +779,7 @@ const WaffleMap: React.FC = () => {
     : BILOXI_COORDS;
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       {/* Google Maps-style Header - Fixed on Mobile */}
       <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex-shrink-0 z-40">
         <div className="max-w-4xl mx-auto">
