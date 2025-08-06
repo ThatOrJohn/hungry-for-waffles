@@ -194,6 +194,107 @@ function MapUpdater({
   return null;
 }
 
+// Component for expandable route details
+const RouteDetails: React.FC<{
+  route: WaffleHouse[];
+  totalDistance: number;
+  routeStats: { distance: number; duration: number } | null;
+  isLoadingRoute: boolean;
+  routeError: string | null;
+  isExpanded: boolean;
+  onToggleExpanded: () => void;
+}> = ({
+  route,
+  totalDistance,
+  routeStats,
+  isLoadingRoute,
+  routeError,
+  isExpanded,
+  onToggleExpanded,
+}) => {
+  return (
+    <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-semibold text-blue-800">
+          🍳 Hungry for Waffles Route
+        </h3>
+        <button
+          onClick={onToggleExpanded}
+          className="text-blue-600 hover:text-blue-800 transition-colors"
+        >
+          {isExpanded ? "▼" : "▶"}
+        </button>
+      </div>
+
+      <div className="text-sm text-blue-700 space-y-1">
+        <div>📍 {route.length} stops</div>
+        <div>🛣️ Total distance: {totalDistance.toFixed(1)} miles</div>
+        {routeStats && (
+          <>
+            <div>🚗 Road distance: {routeStats.distance.toFixed(1)} miles</div>
+            <div>
+              ⏱️ Estimated time: {routeStats.duration.toFixed(0)} minutes
+            </div>
+          </>
+        )}
+        {isLoadingRoute && (
+          <div className="text-blue-600">🔄 Loading real road route...</div>
+        )}
+        {routeError && (
+          <div className="text-orange-600 text-xs">{routeError}</div>
+        )}
+        <div className="text-xs text-blue-600 mt-2">
+          Route follows greedy nearest-neighbor algorithm
+          {routeStats && " with real road paths"}
+        </div>
+      </div>
+
+      {/* Expandable route details */}
+      {isExpanded && (
+        <div className="mt-4 pt-4 border-t border-blue-200">
+          <h4 className="font-medium text-blue-800 mb-3">Route Details:</h4>
+          <div className="space-y-3 max-h-64 overflow-y-auto">
+            {route.map((waffleHouse, index) => (
+              <div
+                key={waffleHouse.id}
+                className="bg-white p-3 rounded-md border border-blue-100"
+              >
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-yellow-800 font-bold text-sm">
+                      🧇
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
+                        Stop #{index + 1}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        Store #{waffleHouse.store_code}
+                      </span>
+                    </div>
+                    <h5 className="font-medium text-gray-900 text-sm mb-1">
+                      {waffleHouse.business_name}
+                    </h5>
+                    <p className="text-xs text-gray-600 mb-2">
+                      📍 {waffleHouse.address}
+                    </p>
+                    <div className="text-xs text-gray-500">
+                      📍 {waffleHouse.latitude.toFixed(6)},{" "}
+                      {waffleHouse.longitude.toFixed(6)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const WaffleMap: React.FC = () => {
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -214,6 +315,7 @@ const WaffleMap: React.FC = () => {
     distance: number;
     duration: number;
   } | null>(null);
+  const [isRouteExpanded, setIsRouteExpanded] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
 
   // Fetch nearby Waffle Houses
@@ -508,38 +610,15 @@ const WaffleMap: React.FC = () => {
 
           {/* Route Information */}
           {route.length > 0 && (
-            <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
-              <h3 className="font-semibold text-blue-800 mb-2">
-                🍳 Hungry for Waffles Route
-              </h3>
-              <div className="text-sm text-blue-700 space-y-1">
-                <div>📍 {route.length} stops</div>
-                <div>🛣️ Total distance: {totalDistance.toFixed(1)} miles</div>
-                {routeStats && (
-                  <>
-                    <div>
-                      🚗 Road distance: {routeStats.distance.toFixed(1)} miles
-                    </div>
-                    <div>
-                      ⏱️ Estimated time: {routeStats.duration.toFixed(0)}{" "}
-                      minutes
-                    </div>
-                  </>
-                )}
-                {isLoadingRoute && (
-                  <div className="text-blue-600">
-                    🔄 Loading real road route...
-                  </div>
-                )}
-                {routeError && (
-                  <div className="text-orange-600 text-xs">{routeError}</div>
-                )}
-                <div className="text-xs text-blue-600 mt-2">
-                  Route follows greedy nearest-neighbor algorithm
-                  {realRouteCoordinates.length > 0 && " with real road paths"}
-                </div>
-              </div>
-            </div>
+            <RouteDetails
+              route={route}
+              totalDistance={totalDistance}
+              routeStats={routeStats}
+              isLoadingRoute={isLoadingRoute}
+              routeError={routeError}
+              isExpanded={isRouteExpanded}
+              onToggleExpanded={() => setIsRouteExpanded(!isRouteExpanded)}
+            />
           )}
 
           {error && (
