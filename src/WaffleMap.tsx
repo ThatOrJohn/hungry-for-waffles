@@ -341,7 +341,18 @@ const WaffleMap: React.FC = () => {
 
         {userLocation && (
           <>
-            <Marker position={[userLocation.lat, userLocation.lng]}>
+            <Marker
+              position={[userLocation.lat, userLocation.lng]}
+              icon={
+                new L.Icon({
+                  iconUrl:
+                    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiMyNTYzZWYiLz4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iNiIgZmlsbD0id2hpdGUiLz4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMyIgZmlsbD0iIzI1NjNlZiIvPgo8L3N2Zz4K",
+                  iconSize: [24, 24],
+                  iconAnchor: [12, 12],
+                  popupAnchor: [0, -12],
+                })
+              }
+            >
               <Popup>
                 <div>
                   <h3 className="font-semibold">{userLocation.name}</h3>
