@@ -746,18 +746,18 @@ const WaffleMap: React.FC = () => {
           {/* Mobile: Single row layout */}
           <div className="flex items-center space-x-2 md:space-x-3">
             {/* Search Input */}
-            <div className="flex-1 relative">
+            <div className="flex-1 relative min-w-0">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Enter location"
-                className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="w-full px-2 py-2 pl-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 onKeyPress={(e) => e.key === "Enter" && searchLocation()}
               />
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+              <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
                 <svg
-                  className="w-4 h-4 text-gray-400"
+                  className="w-3 h-3 text-gray-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -776,12 +776,12 @@ const WaffleMap: React.FC = () => {
             <button
               onClick={getCurrentLocation}
               disabled={isLoading}
-              className="min-w-[40px] h-10 px-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors flex items-center justify-center"
+              className="flex-shrink-0 w-8 h-8 px-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors flex items-center justify-center"
               title="Use my location"
             >
               {isLoading ? (
                 <svg
-                  className="w-4 h-4 animate-spin"
+                  className="w-3 h-3 animate-spin"
                   fill="none"
                   viewBox="0 0 24 24"
                 >
@@ -801,7 +801,7 @@ const WaffleMap: React.FC = () => {
                 </svg>
               ) : (
                 <svg
-                  className="w-4 h-4"
+                  className="w-3 h-3"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -826,19 +826,32 @@ const WaffleMap: React.FC = () => {
             <button
               onClick={searchLocation}
               disabled={isLoading || !searchQuery.trim()}
-              className="min-w-[40px] h-10 px-3 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors text-xs font-medium"
+              className="flex-shrink-0 w-8 h-8 px-1 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors flex items-center justify-center"
+              title="Search"
             >
-              Search
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
             </button>
 
             {/* Radius Toggle */}
             <button
               onClick={() => setIsRadiusExpanded(!isRadiusExpanded)}
-              className="min-w-[40px] h-10 px-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
+              className="flex-shrink-0 w-8 h-8 px-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
               title="Radius settings"
             >
               <svg
-                className="w-4 h-4"
+                className="w-3 h-3"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
