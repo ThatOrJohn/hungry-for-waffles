@@ -100,7 +100,7 @@ const decodePolyline = (encoded: string): [number, number][] => {
     const dlng = result & 1 ? ~(result >> 1) : result >> 1;
     lng += dlng;
 
-    poly.push([lat / 1e5, lng / 1e5]);
+    poly.push([lat / 1e6, lng / 1e6]);
   }
 
   return poly;
