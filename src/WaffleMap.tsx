@@ -37,13 +37,57 @@ interface Location {
   name?: string;
 }
 
-// Component to handle map center updates
-function MapUpdater({ center }: { center: [number, number] }) {
+interface WaffleHouse {
+  id: string;
+  store_code: string;
+  business_name: string;
+  latitude: number;
+  longitude: number;
+  address: string;
+}
+
+interface WaffleHouseResponse {
+  success: boolean;
+  data: WaffleHouse[];
+  count: number;
+  query: {
+    latitude: number;
+    longitude: number;
+    radius: number;
+    radiusMeters: number;
+  };
+}
+
+// Component to handle map center updates and bounds fitting
+function MapUpdater({
+  center,
+  waffleHouses,
+  userLocation,
+}: {
+  center: [number, number];
+  waffleHouses: WaffleHouse[];
+  userLocation: Location | null;
+}) {
   const map = useMap();
 
   useEffect(() => {
     map.setView(center, 12);
   }, [center, map]);
+
+  // Fit bounds to show all markers when waffle houses are loaded
+  useEffect(() => {
+    if (waffleHouses.length > 0 && userLocation) {
+      const bounds = L.latLngBounds([
+        [userLocation.lat, userLocation.lng] as [number, number], // Include user location
+        ...waffleHouses.map(
+          (wh) => [wh.latitude, wh.longitude] as [number, number]
+        ), // Include all waffle houses
+      ]);
+
+      // Add some padding to the bounds
+      map.fitBounds(bounds, { padding: [20, 20] });
+    }
+  }, [waffleHouses, userLocation, map]);
 
   return null;
 }
@@ -53,8 +97,49 @@ const WaffleMap: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRadius, setSelectedRadius] = useState<RadiusOption>(10);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingWaffleHouses, setIsLoadingWaffleHouses] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [waffleHouses, setWaffleHouses] = useState<WaffleHouse[]>([]);
+  const [waffleHouseError, setWaffleHouseError] = useState<string | null>(null);
   const mapRef = useRef<L.Map | null>(null);
+
+  // Fetch nearby Waffle Houses
+  const fetchWaffleHouses = async (
+    lat: number,
+    lng: number,
+    radius: number
+  ) => {
+    setIsLoadingWaffleHouses(true);
+    setWaffleHouseError(null);
+
+    try {
+      const response = await fetch(
+        `/api/waffle_houses?lat=${lat}&lng=${lng}&radius=${radius}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: WaffleHouseResponse = await response.json();
+
+      if (data.success) {
+        setWaffleHouses(data.data);
+      } else {
+        throw new Error("Failed to fetch Waffle Houses");
+      }
+    } catch (err) {
+      console.error("Error fetching Waffle Houses:", err);
+      setWaffleHouseError(
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch nearby Waffle Houses"
+      );
+      setWaffleHouses([]);
+    } finally {
+      setIsLoadingWaffleHouses(false);
+    }
+  };
 
   // Get user's current location
   const getCurrentLocation = () => {
@@ -140,6 +225,13 @@ const WaffleMap: React.FC = () => {
     getCurrentLocation();
   }, []);
 
+  // Fetch Waffle Houses when location or radius changes
+  useEffect(() => {
+    if (userLocation) {
+      fetchWaffleHouses(userLocation.lat, userLocation.lng, selectedRadius);
+    }
+  }, [userLocation, selectedRadius]);
+
   const currentCenter: [number, number] = userLocation
     ? [userLocation.lat, userLocation.lng]
     : BILOXI_COORDS;
@@ -202,6 +294,24 @@ const WaffleMap: React.FC = () => {
             </div>
           </div>
 
+          {/* Waffle House Status */}
+          <div className="text-sm">
+            {isLoadingWaffleHouses ? (
+              <div className="text-blue-600">Loading Waffle Houses...</div>
+            ) : waffleHouses.length > 0 ? (
+              <div className="text-green-600">
+                Found {waffleHouses.length} Waffle House
+                {waffleHouses.length === 1 ? "" : "es"}
+              </div>
+            ) : waffleHouseError ? (
+              <div className="text-red-600">{waffleHouseError}</div>
+            ) : userLocation ? (
+              <div className="text-gray-600">
+                No Waffle Houses found in this area
+              </div>
+            ) : null}
+          </div>
+
           {error && (
             <div className="text-red-600 text-sm bg-red-50 p-2 rounded">
               {error}
@@ -223,7 +333,11 @@ const WaffleMap: React.FC = () => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        <MapUpdater center={currentCenter} />
+        <MapUpdater
+          center={currentCenter}
+          waffleHouses={waffleHouses}
+          userLocation={userLocation}
+        />
 
         {userLocation && (
           <>
@@ -263,6 +377,44 @@ const WaffleMap: React.FC = () => {
             </Circle>
           </>
         )}
+
+        {/* Waffle House Markers */}
+        {waffleHouses.map((waffleHouse) => (
+          <Marker
+            key={waffleHouse.id}
+            position={[waffleHouse.latitude, waffleHouse.longitude]}
+            icon={
+              new L.Icon({
+                iconUrl:
+                  "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+                iconRetinaUrl:
+                  "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+                shadowUrl:
+                  "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41],
+              })
+            }
+          >
+            <Popup>
+              <div>
+                <h3 className="font-semibold text-lg">
+                  {waffleHouse.business_name}
+                </h3>
+                <p className="text-sm text-gray-600 mb-2">
+                  Store #{waffleHouse.store_code}
+                </p>
+                <p className="text-sm">{waffleHouse.address}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {waffleHouse.latitude.toFixed(6)},{" "}
+                  {waffleHouse.longitude.toFixed(6)}
+                </p>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );
