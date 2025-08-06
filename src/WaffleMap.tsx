@@ -743,7 +743,8 @@ const WaffleMap: React.FC = () => {
       {/* Google Maps-style Header */}
       <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center space-x-3">
+          {/* Mobile: Stack controls vertically */}
+          <div className="md:flex md:items-center md:space-x-3 space-y-3 md:space-y-0">
             {/* Search Input */}
             <div className="flex-1 relative">
               <input
@@ -771,34 +772,73 @@ const WaffleMap: React.FC = () => {
               </div>
             </div>
 
-            {/* Location Button */}
-            <button
-              onClick={getCurrentLocation}
-              disabled={isLoading}
-              className="min-w-[48px] h-12 px-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors flex items-center justify-center"
-              title="Use my location"
-            >
-              {isLoading ? (
-                <svg
-                  className="w-5 h-5 animate-spin"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
+            {/* Button Row */}
+            <div className="flex items-center space-x-2 md:space-x-3">
+              {/* Location Button */}
+              <button
+                onClick={getCurrentLocation}
+                disabled={isLoading}
+                className="min-w-[48px] h-12 px-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors flex items-center justify-center"
+                title="Use my location"
+              >
+                {isLoading ? (
+                  <svg
+                    className="w-5 h-5 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
                     stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-              ) : (
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                )}
+              </button>
+
+              {/* Search Button */}
+              <button
+                onClick={searchLocation}
+                disabled={isLoading || !searchQuery.trim()}
+                className="min-w-[48px] h-12 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors text-sm font-medium"
+              >
+                Search
+              </button>
+
+              {/* Radius Toggle */}
+              <button
+                onClick={() => setIsRadiusExpanded(!isRadiusExpanded)}
+                className="min-w-[48px] h-12 px-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
+                title="Radius settings"
+              >
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -809,53 +849,17 @@ const WaffleMap: React.FC = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
                   />
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-              )}
-            </button>
-
-            {/* Search Button */}
-            <button
-              onClick={searchLocation}
-              disabled={isLoading || !searchQuery.trim()}
-              className="min-w-[48px] h-12 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors text-sm font-medium"
-            >
-              Search
-            </button>
-
-            {/* Radius Toggle */}
-            <button
-              onClick={() => setIsRadiusExpanded(!isRadiusExpanded)}
-              className="min-w-[48px] h-12 px-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
-              title="Radius settings"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </button>
+              </button>
+            </div>
           </div>
 
           {/* Radius Slider - Collapsible */}
@@ -903,7 +907,7 @@ const WaffleMap: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col lg:flex-row">
         {/* Map Container */}
-        <div className="flex-1 h-60vh lg:h-full relative">
+        <div className="flex-1 h-[calc(100vh-200px)] lg:h-full relative">
           <MapContainer
             center={currentCenter}
             zoom={12}
@@ -1184,7 +1188,7 @@ const WaffleMap: React.FC = () => {
 
                 <div
                   className={`transition-all duration-300 ease-in-out ${
-                    isRouteDetailsExpanded ? "max-h-96" : "max-h-20"
+                    isRouteDetailsExpanded ? "max-h-80" : "max-h-16"
                   } overflow-hidden`}
                 >
                   <div className="p-4">

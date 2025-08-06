@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom height utilities */
+/* Custom height utilities - keeping for potential future use */
 .h-60vh {
   height: 60vh;
 }
