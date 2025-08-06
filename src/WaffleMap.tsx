@@ -495,7 +495,7 @@ const WaffleMap: React.FC = () => {
             ) : waffleHouses.length > 0 ? (
               <div className="text-green-600">
                 Found {waffleHouses.length} Waffle House
-                {waffleHouses.length === 1 ? "" : "es"}
+                {waffleHouses.length === 1 ? "" : "s"}
               </div>
             ) : waffleHouseError ? (
               <div className="text-red-600">{waffleHouseError}</div>
