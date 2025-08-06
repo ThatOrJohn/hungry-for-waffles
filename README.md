@@ -1,4 +1,78 @@
-# React + TypeScript + Vite
+# Hungry for Waffles 🍳
+
+A React application that solves the "Hungry for Waffles Problem" - finding the optimal route to visit multiple Waffle House locations using real road routes via OpenRouteService.
+
+## Features
+
+- 🗺️ Interactive map with Leaflet
+- 📍 User location detection
+- 🔍 Location search functionality
+- 🍳 Waffle House location finder
+- 🛣️ Real road routing with OpenRouteService
+- 📊 Route statistics (distance, duration)
+- 🎯 Greedy nearest-neighbor algorithm for route optimization
+
+## Setup
+
+### Prerequisites
+
+- Node.js (v20.19.0 or higher)
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+### OpenRouteService API Key
+
+To enable real road routing, you need an OpenRouteService API key:
+
+1. Sign up for a free API key at: https://openrouteservice.org/dev/#/signup
+2. Create a `.env` file in the root directory
+3. Add your API key:
+   ```
+   VITE_OPENROUTE_API_KEY=your_openroute_api_key_here
+   ```
+
+### Development
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5173`
+
+## How it Works
+
+1. **Location Detection**: Gets the user's current location or allows manual search
+2. **Waffle House Discovery**: Finds nearby Waffle House locations within a specified radius
+3. **Route Optimization**: Uses a greedy nearest-neighbor algorithm to find an efficient route
+4. **Real Road Routing**: Integrates with OpenRouteService to get actual driving routes
+5. **Visualization**: Displays the route on an interactive map with statistics
+
+## API Integration
+
+- **Waffle House API**: Custom API endpoint for finding nearby locations
+- **OpenRouteService**: For real road routing and navigation
+- **OpenStreetMap Nominatim**: For location search and geocoding
+
+## Technologies Used
+
+- React 19
+- TypeScript
+- Vite
+- Leaflet (React-Leaflet)
+- Tailwind CSS
+- Axios
+- OpenRouteService API
+
+## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
@@ -39,7 +113,7 @@ export default tseslint.config([
 ]);
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/eslint-plugin-react-dom) for React-specific lint rules:
 
 ```js
 // eslint.config.js

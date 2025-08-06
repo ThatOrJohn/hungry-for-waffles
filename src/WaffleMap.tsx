@@ -10,10 +10,11 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import axios from "axios";
 import { getMapRadius, type RadiusOption } from "./utils/units";
 
 // Fix for default marker icons
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as { _getIconUrl?: string })._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
@@ -104,6 +105,34 @@ const solveHungryForWaffles = (
   return { route, totalDistance };
 };
 
+// Helper function to call the ORS Directions API
+async function getORSRoute(
+  coordinates: [number, number][]
+): Promise<number[][]> {
+  const apiKey = import.meta.env.VITE_OPENROUTE_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "OpenRouteService API key not found. Please add VITE_OPENROUTE_API_KEY to your .env file."
+    );
+  }
+
+  const res = await axios.post(
+    "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
+    {
+      coordinates, // [lng, lat] format
+    },
+    {
+      headers: {
+        Authorization: apiKey,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  // Return the list of [lng, lat] points from the route geometry
+  return res.data.features[0].geometry.coordinates;
+}
+
 interface Location {
   lat: number;
   lng: number;
@@ -176,6 +205,15 @@ const WaffleMap: React.FC = () => {
   const [waffleHouseError, setWaffleHouseError] = useState<string | null>(null);
   const [route, setRoute] = useState<WaffleHouse[]>([]);
   const [totalDistance, setTotalDistance] = useState<number>(0);
+  const [realRouteCoordinates, setRealRouteCoordinates] = useState<
+    [number, number][]
+  >([]);
+  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  const [routeError, setRouteError] = useState<string | null>(null);
+  const [routeStats, setRouteStats] = useState<{
+    distance: number;
+    duration: number;
+  } | null>(null);
   const mapRef = useRef<L.Map | null>(null);
 
   // Fetch nearby Waffle Houses
@@ -207,9 +245,14 @@ const WaffleMap: React.FC = () => {
             solveHungryForWaffles(lat, lng, data.data);
           setRoute(calculatedRoute);
           setTotalDistance(calculatedDistance);
+
+          // Get real road route from OpenRouteService
+          await fetchRealRoute(lat, lng, calculatedRoute);
         } else {
           setRoute([]);
           setTotalDistance(0);
+          setRealRouteCoordinates([]);
+          setRouteStats(null);
         }
       } else {
         throw new Error("Failed to fetch Waffle Houses");
@@ -224,6 +267,71 @@ const WaffleMap: React.FC = () => {
       setWaffleHouses([]);
     } finally {
       setIsLoadingWaffleHouses(false);
+    }
+  };
+
+  // Fetch real road route from OpenRouteService
+  const fetchRealRoute = async (
+    userLat: number,
+    userLng: number,
+    waffleRoute: WaffleHouse[]
+  ) => {
+    if (waffleRoute.length === 0) return;
+
+    setIsLoadingRoute(true);
+    setRouteError(null);
+
+    try {
+      // Build coordinates array starting from user location, then all waffle houses in route order
+      const coordinates: [number, number][] = [
+        [userLng, userLat], // Start from user location [lng, lat]
+        ...waffleRoute.map((wh): [number, number] => [
+          wh.longitude,
+          wh.latitude,
+        ]), // Add all waffle houses [lng, lat]
+      ];
+
+      const routeCoordinates = await getORSRoute(coordinates);
+
+      // Convert [lng, lat] back to [lat, lng] for Leaflet
+      const leafletCoordinates: [number, number][] = routeCoordinates
+        .filter((coord): coord is [number, number] => coord.length >= 2)
+        .map((coord): [number, number] => [coord[1], coord[0]]); // [lat, lng]
+
+      setRealRouteCoordinates(leafletCoordinates);
+
+      // Extract route statistics if available
+      try {
+        const apiKey = import.meta.env.VITE_OPENROUTE_API_KEY;
+        const res = await axios.post(
+          "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
+          { coordinates },
+          {
+            headers: {
+              Authorization: apiKey,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        const summary = res.data.features[0].properties.summary;
+        setRouteStats({
+          distance: summary.distance / 1609.34, // Convert meters to miles
+          duration: summary.duration / 60, // Convert seconds to minutes
+        });
+      } catch (statsError) {
+        console.warn("Could not fetch route statistics:", statsError);
+        setRouteStats(null);
+      }
+    } catch (err) {
+      console.error("Error fetching real route:", err);
+      setRouteError(
+        "Failed to get real road route. Showing straight-line route instead."
+      );
+      setRealRouteCoordinates([]);
+      setRouteStats(null);
+    } finally {
+      setIsLoadingRoute(false);
     }
   };
 
@@ -407,8 +515,28 @@ const WaffleMap: React.FC = () => {
               <div className="text-sm text-blue-700 space-y-1">
                 <div>📍 {route.length} stops</div>
                 <div>🛣️ Total distance: {totalDistance.toFixed(1)} miles</div>
+                {routeStats && (
+                  <>
+                    <div>
+                      🚗 Road distance: {routeStats.distance.toFixed(1)} miles
+                    </div>
+                    <div>
+                      ⏱️ Estimated time: {routeStats.duration.toFixed(0)}{" "}
+                      minutes
+                    </div>
+                  </>
+                )}
+                {isLoadingRoute && (
+                  <div className="text-blue-600">
+                    🔄 Loading real road route...
+                  </div>
+                )}
+                {routeError && (
+                  <div className="text-orange-600 text-xs">{routeError}</div>
+                )}
                 <div className="text-xs text-blue-600 mt-2">
                   Route follows greedy nearest-neighbor algorithm
+                  {realRouteCoordinates.length > 0 && " with real road paths"}
                 </div>
               </div>
             </div>
@@ -541,44 +669,99 @@ const WaffleMap: React.FC = () => {
 
         {/* Route Polyline */}
         {route.length > 0 && userLocation && (
-          <Polyline
-            positions={[
-              [userLocation.lat, userLocation.lng],
-              ...route.map(
-                (wh) => [wh.latitude, wh.longitude] as [number, number]
-              ),
-            ]}
-            pathOptions={{
-              color: "red",
-              weight: 3,
-              opacity: 0.8,
-              dashArray: "5, 10",
-            }}
-          >
-            <Popup>
-              <div>
-                <h3 className="font-semibold text-lg">
-                  🍳 Hungry for Waffles Route
-                </h3>
-                <p className="text-sm text-gray-600 mb-2">
-                  Optimal route visiting all {route.length} Waffle Houses
-                </p>
-                <p className="text-sm font-medium">
-                  Total Distance: {totalDistance.toFixed(1)} miles
-                </p>
-                <div className="text-xs text-gray-500 mt-2">
-                  <p>Route order:</p>
-                  <ol className="list-decimal list-inside mt-1">
-                    {route.map((wh, index) => (
-                      <li key={wh.id} className="truncate">
-                        {index + 1}. {wh.business_name}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              </div>
-            </Popup>
-          </Polyline>
+          <>
+            {/* Real road route from OpenRouteService */}
+            {realRouteCoordinates.length > 0 && (
+              <Polyline
+                positions={realRouteCoordinates}
+                pathOptions={{
+                  color: "red",
+                  weight: 4,
+                  opacity: 0.8,
+                }}
+              >
+                <Popup>
+                  <div>
+                    <h3 className="font-semibold text-lg">
+                      🍳 Real Road Route
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Actual driving route visiting all {route.length} Waffle
+                      Houses
+                    </p>
+                    {routeStats && (
+                      <>
+                        <p className="text-sm font-medium">
+                          Road Distance: {routeStats.distance.toFixed(1)} miles
+                        </p>
+                        <p className="text-sm font-medium">
+                          Estimated Time: {routeStats.duration.toFixed(0)}{" "}
+                          minutes
+                        </p>
+                      </>
+                    )}
+                    <div className="text-xs text-gray-500 mt-2">
+                      <p>Route order:</p>
+                      <ol className="list-decimal list-inside mt-1">
+                        {route.map((wh, index) => (
+                          <li key={wh.id} className="truncate">
+                            {index + 1}. {wh.business_name}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+                </Popup>
+              </Polyline>
+            )}
+
+            {/* Fallback straight-line route if real route failed */}
+            {realRouteCoordinates.length === 0 && !isLoadingRoute && (
+              <Polyline
+                positions={[
+                  [userLocation.lat, userLocation.lng],
+                  ...route.map(
+                    (wh) => [wh.latitude, wh.longitude] as [number, number]
+                  ),
+                ]}
+                pathOptions={{
+                  color: "orange",
+                  weight: 3,
+                  opacity: 0.8,
+                  dashArray: "5, 10",
+                }}
+              >
+                <Popup>
+                  <div>
+                    <h3 className="font-semibold text-lg">
+                      🍳 Straight-Line Route
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Direct route visiting all {route.length} Waffle Houses
+                    </p>
+                    <p className="text-sm font-medium">
+                      Total Distance: {totalDistance.toFixed(1)} miles
+                    </p>
+                    {routeError && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        {routeError}
+                      </p>
+                    )}
+                    <div className="text-xs text-gray-500 mt-2">
+                      <p>Route order:</p>
+                      <ol className="list-decimal list-inside mt-1">
+                        {route.map((wh, index) => (
+                          <li key={wh.id} className="truncate">
+                            {index + 1}. {wh.business_name}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+                </Popup>
+              </Polyline>
+            )}
+          </>
         )}
       </MapContainer>
     </div>
