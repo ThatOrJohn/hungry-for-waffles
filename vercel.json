@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "api/waffle_houses.ts": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/waffle_houses",
+      "destination": "/api/waffle_houses.ts"
+    }
+  ]
+} 

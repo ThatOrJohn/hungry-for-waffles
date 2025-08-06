@@ -19,6 +19,7 @@ interface WaffleHouse {
   address: string;
 }
 
+// Use named export for better ES module compatibility
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Only allow GET requests
   if (req.method !== "GET") {
