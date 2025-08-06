@@ -9,7 +9,7 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { getMapRadius, RADIUS_OPTIONS, type RadiusOption } from "./utils/units";
+import { getMapRadius, type RadiusOption } from "./utils/units";
 
 // Fix for default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -63,7 +63,11 @@ const WaffleMap: React.FC = () => {
 
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by this browser");
-      setUserLocation({ ...BILOXI_COORDS, name: "Biloxi, MS (Default)" });
+      setUserLocation({
+        lat: BILOXI_COORDS[0],
+        lng: BILOXI_COORDS[1],
+        name: "Biloxi, MS (Default)",
+      });
       setIsLoading(false);
       return;
     }
@@ -81,7 +85,11 @@ const WaffleMap: React.FC = () => {
       (error) => {
         console.error("Geolocation error:", error);
         setError("Unable to get your location. Using default location.");
-        setUserLocation({ ...BILOXI_COORDS, name: "Biloxi, MS (Default)" });
+        setUserLocation({
+          lat: BILOXI_COORDS[0],
+          lng: BILOXI_COORDS[1],
+          name: "Biloxi, MS (Default)",
+        });
         setIsLoading(false);
       },
       {
@@ -170,7 +178,8 @@ const WaffleMap: React.FC = () => {
           {/* Radius Selector */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
-              Search Radius: {selectedRadius} mile{selectedRadius === 1 ? '' : 's'}
+              Search Radius: {selectedRadius} mile
+              {selectedRadius === 1 ? "" : "s"}
             </label>
             <div className="relative">
               <input
@@ -179,7 +188,9 @@ const WaffleMap: React.FC = () => {
                 max="50"
                 step="1"
                 value={selectedRadius}
-                onChange={(e) => setSelectedRadius(Number(e.target.value) as RadiusOption)}
+                onChange={(e) =>
+                  setSelectedRadius(Number(e.target.value) as RadiusOption)
+                }
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
