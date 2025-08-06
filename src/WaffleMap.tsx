@@ -351,105 +351,73 @@ function MapUpdater({
   return null;
 }
 
-// Component for expandable route details
-const RouteDetails: React.FC<{
+// Component for route details card
+const RouteDetailsCard: React.FC<{
   route: WaffleHouse[];
   totalDistance: number;
   routeStats: { distance: number; duration: number } | null;
   isLoadingRoute: boolean;
   routeError: string | null;
-  isExpanded: boolean;
-  onToggleExpanded: () => void;
-}> = ({
-  route,
-  totalDistance,
-  routeStats,
-  isLoadingRoute,
-  routeError,
-  isExpanded,
-  onToggleExpanded,
-}) => {
+}> = ({ route, totalDistance, routeStats, isLoadingRoute, routeError }) => {
   return (
-    <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-blue-800 text-sm md:text-base">
-          🍳 Hungry for Waffles Route
-        </h3>
-        <button
-          onClick={onToggleExpanded}
-          className="text-blue-600 hover:text-blue-800 transition-colors p-1"
-        >
-          {isExpanded ? "▼" : "▶"}
-        </button>
-      </div>
-
-      <div className="text-xs md:text-sm text-blue-700 space-y-1">
-        <div>📍 {route.length} stops</div>
-        <div>🛣️ Total distance: {totalDistance.toFixed(1)} miles</div>
-        {routeStats && (
-          <>
-            <div>🚗 Road distance: {routeStats.distance.toFixed(1)} miles</div>
-            <div>
-              ⏱️ Estimated time: {routeStats.duration.toFixed(0)} minutes
-            </div>
-          </>
-        )}
-        {isLoadingRoute && (
-          <div className="text-blue-600">🔄 Loading real road route...</div>
-        )}
-        {routeError && (
-          <div className="text-orange-600 text-xs">{routeError}</div>
-        )}
-        <div className="text-xs text-blue-600 mt-2">
-          Route optimized using OpenRouteService TSP solver
-          {routeStats && " with real road paths"}
+    <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+            <span className="text-yellow-800 font-bold text-sm">🧇</span>
+          </div>
+          <h3 className="font-semibold text-gray-900">Waffle Route</h3>
         </div>
-      </div>
-
-      {/* Expandable route details */}
-      {isExpanded && (
-        <div className="mt-4 pt-4 border-t border-blue-200">
-          <h4 className="font-medium text-blue-800 mb-3 text-sm">
-            Route Details:
-          </h4>
-          <div className="space-y-3 max-h-48 md:max-h-64 overflow-y-auto">
-            {route.map((waffleHouse, index) => (
-              <div
-                key={waffleHouse.id}
-                className="bg-white p-2 md:p-3 rounded-md border border-blue-100"
-              >
-                <div className="flex items-start space-x-2 md:space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-6 h-6 md:w-8 md:h-8 bg-yellow-400 rounded-full flex items-center justify-center text-yellow-800 font-bold text-xs md:text-sm">
-                      🧇
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-1 md:gap-2 mb-1">
-                      <span className="bg-blue-100 text-blue-800 text-xs font-medium px-1 md:px-2 py-1 rounded">
-                        Stop #{index + 1}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        Store #{waffleHouse.store_code}
-                      </span>
-                    </div>
-                    <h5 className="font-medium text-gray-900 text-xs md:text-sm mb-1">
-                      {waffleHouse.business_name}
-                    </h5>
-                    <p className="text-xs text-gray-600 mb-1 md:mb-2">
-                      📍 {waffleHouse.address}
-                    </p>
-                    <div className="text-xs text-gray-500 hidden md:block">
-                      📍 {waffleHouse.latitude.toFixed(6)},{" "}
-                      {waffleHouse.longitude.toFixed(6)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+        <div className="text-right">
+          <div className="text-sm font-medium text-gray-900">
+            {route.length} stops
+          </div>
+          <div className="text-xs text-gray-500">
+            {routeStats ? (
+              <>
+                {routeStats.distance.toFixed(1)} mi •{" "}
+                {routeStats.duration.toFixed(0)} min
+              </>
+            ) : (
+              `${totalDistance.toFixed(1)} mi`
+            )}
           </div>
         </div>
+      </div>
+
+      {isLoadingRoute && (
+        <div className="text-blue-600 text-sm mb-3">🔄 Loading route...</div>
       )}
+
+      {routeError && (
+        <div className="text-orange-600 text-sm mb-3">{routeError}</div>
+      )}
+
+      <div className="space-y-2 max-h-64 overflow-y-auto">
+        {route.map((waffleHouse, index) => (
+          <div
+            key={waffleHouse.id}
+            className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
+          >
+            <div className="flex-shrink-0">
+              <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                {index + 1}
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center space-x-2 mb-1">
+                <span className="text-xs font-medium text-gray-500">
+                  Store #{waffleHouse.store_code}
+                </span>
+              </div>
+              <h4 className="font-medium text-gray-900 text-sm mb-1">
+                {waffleHouse.business_name}
+              </h4>
+              <p className="text-xs text-gray-600">📍 {waffleHouse.address}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -474,8 +442,8 @@ const WaffleMap: React.FC = () => {
     distance: number;
     duration: number;
   } | null>(null);
-  const [isRouteExpanded, setIsRouteExpanded] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isRadiusExpanded, setIsRadiusExpanded] = useState(false);
+  const [isRouteDetailsExpanded, setIsRouteDetailsExpanded] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
 
   // Fetch nearby Waffle Houses
@@ -710,392 +678,484 @@ const WaffleMap: React.FC = () => {
     : BILOXI_COORDS;
 
   return (
-    <div className="h-screen w-full relative">
-      {/* Mobile Backdrop Overlay */}
-      {isPanelOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-[999]"
-          onClick={() => setIsPanelOpen(false)}
-        />
-      )}
+    <div className="h-full flex flex-col">
+      {/* Google Maps-style Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center space-x-3">
+            {/* Search Input */}
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for a location..."
+                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                onKeyPress={(e) => e.key === "Enter" && searchLocation()}
+              />
+              <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                <svg
+                  className="w-5 h-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+            </div>
 
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsPanelOpen(!isPanelOpen)}
-        className="md:hidden absolute top-4 left-4 z-[1001] bg-white rounded-lg shadow-lg p-3 border border-gray-200"
-        aria-label="Toggle menu"
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          {isPanelOpen ? (
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          ) : (
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          )}
-        </svg>
-      </button>
+            {/* Location Button */}
+            <button
+              onClick={getCurrentLocation}
+              disabled={isLoading}
+              className="min-w-[48px] h-12 px-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors flex items-center justify-center"
+              title="Use my location"
+            >
+              {isLoading ? (
+                <svg
+                  className="w-5 h-5 animate-spin"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              ) : (
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              )}
+            </button>
 
-      {/* Search Controls - Mobile Responsive */}
-      <div
-        className={`absolute top-4 left-4 z-[1000] bg-white rounded-lg shadow-lg transition-all duration-300 ease-in-out ${
-          isPanelOpen
-            ? "translate-x-0 opacity-100"
-            : "md:translate-x-0 md:opacity-100 -translate-x-full opacity-0 md:static"
-        } ${isPanelOpen ? "w-[calc(100vw-2rem)] max-w-sm" : "w-full max-w-sm"}`}
-      >
-        <div className="p-4 space-y-3">
-          <div className="flex space-x-2">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for a location..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              onKeyPress={(e) => e.key === "Enter" && searchLocation()}
-            />
+            {/* Search Button */}
             <button
               onClick={searchLocation}
-              disabled={isLoading}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 text-sm whitespace-nowrap"
+              disabled={isLoading || !searchQuery.trim()}
+              className="min-w-[48px] h-12 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors text-sm font-medium"
             >
-              {isLoading ? "..." : "Search"}
+              Search
+            </button>
+
+            {/* Radius Toggle */}
+            <button
+              onClick={() => setIsRadiusExpanded(!isRadiusExpanded)}
+              className="min-w-[48px] h-12 px-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
+              title="Radius settings"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
             </button>
           </div>
 
-          <button
-            onClick={getCurrentLocation}
-            disabled={isLoading}
-            className="w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 text-sm"
-          >
-            {isLoading ? "Getting Location..." : "Use My Location"}
-          </button>
-
-          {/* Radius Selector */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Search Radius: {selectedRadius} mile
-              {selectedRadius === 1 ? "" : "s"}
-            </label>
-            <div className="relative">
-              <input
-                type="range"
-                min="1"
-                max="50"
-                step="1"
-                value={selectedRadius}
-                onChange={(e) =>
-                  setSelectedRadius(Number(e.target.value) as RadiusOption)
-                }
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>1 mi</span>
-                <span>10 mi</span>
-                <span>25 mi</span>
-                <span>50 mi</span>
+          {/* Radius Slider - Collapsible */}
+          {isRadiusExpanded && (
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Search Radius: {selectedRadius} mile
+                  {selectedRadius === 1 ? "" : "s"}
+                </label>
+              </div>
+              <div className="relative">
+                <input
+                  type="range"
+                  min="1"
+                  max="50"
+                  step="1"
+                  value={selectedRadius}
+                  onChange={(e) =>
+                    setSelectedRadius(Number(e.target.value) as RadiusOption)
+                  }
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>1 mi</span>
+                  <span>10 mi</span>
+                  <span>25 mi</span>
+                  <span>50 mi</span>
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Waffle House Status */}
-          <div className="text-sm">
-            {isLoadingWaffleHouses ? (
-              <div className="text-blue-600">Loading Waffle Houses...</div>
-            ) : waffleHouses.length > 0 ? (
-              <div className="text-green-600">
-                Found {waffleHouses.length} Waffle House
-                {waffleHouses.length === 1 ? "" : "s"}
-              </div>
-            ) : waffleHouseError ? (
-              <div className="text-red-600">{waffleHouseError}</div>
-            ) : userLocation ? (
-              <div className="text-gray-600">
-                No Waffle Houses found in this area
-              </div>
-            ) : null}
-          </div>
-
-          {/* Route Information */}
-          {route.length > 0 && (
-            <RouteDetails
-              route={route}
-              totalDistance={totalDistance}
-              routeStats={routeStats}
-              isLoadingRoute={isLoadingRoute}
-              routeError={routeError}
-              isExpanded={isRouteExpanded}
-              onToggleExpanded={() => setIsRouteExpanded(!isRouteExpanded)}
-            />
           )}
 
+          {/* Status Messages */}
           {error && (
-            <div className="text-red-600 text-sm bg-red-50 p-2 rounded">
+            <div className="mt-3 text-red-600 text-sm bg-red-50 p-2 rounded">
               {error}
+            </div>
+          )}
+
+          {isLoadingWaffleHouses && (
+            <div className="mt-3 text-blue-600 text-sm">
+              Loading Waffle Houses...
+            </div>
+          )}
+
+          {waffleHouseError && (
+            <div className="mt-3 text-red-600 text-sm">{waffleHouseError}</div>
+          )}
+
+          {waffleHouses.length > 0 && !isLoadingWaffleHouses && (
+            <div className="mt-3 text-green-600 text-sm">
+              Found {waffleHouses.length} Waffle House
+              {waffleHouses.length === 1 ? "" : "s"}
             </div>
           )}
         </div>
       </div>
 
-      {/* Mobile Route Summary - Fixed at bottom when panel is closed */}
-      {route.length > 0 && !isPanelOpen && (
-        <div className="md:hidden absolute bottom-4 left-4 right-4 z-[1000] bg-white rounded-lg shadow-lg p-3 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="text-sm font-medium text-gray-900 flex items-center">
-                <span className="mr-2">🍳</span>
-                {route.length} Waffle House{route.length === 1 ? "" : "s"}
-              </div>
-              <div className="text-xs text-gray-600 flex items-center mt-1">
-                <span className="mr-2">🛣️</span>
-                {routeStats ? (
-                  <>
-                    {routeStats.distance.toFixed(1)} mi •{" "}
-                    {routeStats.duration.toFixed(0)} min
-                  </>
-                ) : (
-                  `${totalDistance.toFixed(1)} mi total`
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col lg:flex-row">
+        {/* Map Container */}
+        <div className="flex-1 h-60vh lg:h-full relative">
+          <MapContainer
+            center={currentCenter}
+            zoom={12}
+            className="h-full w-full"
+            ref={mapRef}
+            bounds={SOUTHEAST_BOUNDS}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+
+            <MapUpdater
+              center={currentCenter}
+              waffleHouses={waffleHouses}
+              userLocation={userLocation}
+            />
+
+            {userLocation && (
+              <>
+                <Marker
+                  position={[userLocation.lat, userLocation.lng]}
+                  icon={
+                    new L.Icon({
+                      iconUrl:
+                        "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiMyNTYzZWYiLz4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iNiIgZmlsbD0id2hpdGUiLz4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMyIgZmlsbD0iIzI1NjNlZiIvPgo8L3N2Zz4K",
+                      iconSize: [24, 24],
+                      iconAnchor: [12, 12],
+                      popupAnchor: [0, -12],
+                    })
+                  }
+                >
+                  <Popup>
+                    <div className="min-w-[200px]">
+                      <h3 className="font-semibold text-sm">
+                        {userLocation.name}
+                      </h3>
+                      <p className="text-xs text-gray-600">
+                        {userLocation.lat.toFixed(6)},{" "}
+                        {userLocation.lng.toFixed(6)}
+                      </p>
+                    </div>
+                  </Popup>
+                </Marker>
+
+                {/* Search radius circle */}
+                <Circle
+                  center={[userLocation.lat, userLocation.lng]}
+                  radius={getMapRadius(selectedRadius)}
+                  pathOptions={{
+                    color: "blue",
+                    fillColor: "blue",
+                    fillOpacity: 0.1,
+                    weight: 2,
+                  }}
+                >
+                  <Popup>
+                    <div className="min-w-[200px]">
+                      <h3 className="font-semibold text-sm">
+                        {selectedRadius}-Mile Radius
+                      </h3>
+                      <p className="text-xs text-gray-600">
+                        This circle shows a {selectedRadius}-mile radius around{" "}
+                        {userLocation.name}
+                      </p>
+                    </div>
+                  </Popup>
+                </Circle>
+              </>
+            )}
+
+            {/* Waffle House Markers */}
+            {waffleHouses.map((waffleHouse) => {
+              const routeIndex = route.findIndex(
+                (wh) => wh.id === waffleHouse.id
+              );
+              const isInRoute = routeIndex !== -1;
+
+              return (
+                <Marker
+                  key={waffleHouse.id}
+                  position={[waffleHouse.latitude, waffleHouse.longitude]}
+                  icon={
+                    new L.Icon({
+                      iconUrl:
+                        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+                      iconRetinaUrl:
+                        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+                      shadowUrl:
+                        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+                      iconSize: [25, 41],
+                      iconAnchor: [12, 41],
+                      popupAnchor: [1, -34],
+                      shadowSize: [41, 41],
+                    })
+                  }
+                >
+                  <Popup>
+                    <div className="min-w-[250px] max-w-[300px]">
+                      <h3 className="font-semibold text-sm md:text-base">
+                        {waffleHouse.business_name}
+                      </h3>
+                      <p className="text-xs md:text-sm text-gray-600 mb-2">
+                        Store #{waffleHouse.store_code}
+                      </p>
+                      {isInRoute && (
+                        <p className="text-xs md:text-sm font-medium text-blue-600 mb-1">
+                          🍳 Stop #{routeIndex + 1} on route
+                        </p>
+                      )}
+                      <p className="text-xs md:text-sm">
+                        {waffleHouse.address}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 hidden md:block">
+                        {waffleHouse.latitude.toFixed(6)},{" "}
+                        {waffleHouse.longitude.toFixed(6)}
+                      </p>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
+
+            {/* Route Polyline */}
+            {route.length > 0 && userLocation && (
+              <>
+                {/* Real road route from OpenRouteService */}
+                {realRouteCoordinates.length > 0 && (
+                  <Polyline
+                    positions={realRouteCoordinates}
+                    pathOptions={{
+                      color: "red",
+                      weight: 4,
+                      opacity: 0.8,
+                    }}
+                  >
+                    <Popup>
+                      <div className="min-w-[280px] max-w-[350px]">
+                        <h3 className="font-semibold text-sm md:text-base">
+                          🍳 Optimized TSP Route
+                        </h3>
+                        <p className="text-xs md:text-sm text-gray-600 mb-2">
+                          Optimized route visiting all {route.length} Waffle
+                          Houses using OpenRouteService
+                        </p>
+                        {routeStats && (
+                          <>
+                            <p className="text-xs md:text-sm font-medium">
+                              Road Distance: {routeStats.distance.toFixed(1)}{" "}
+                              miles
+                            </p>
+                            <p className="text-xs md:text-sm font-medium">
+                              Estimated Time: {routeStats.duration.toFixed(0)}{" "}
+                              minutes
+                            </p>
+                          </>
+                        )}
+                        <div className="text-xs text-gray-500 mt-2">
+                          <p>Route order:</p>
+                          <ol className="list-decimal list-inside mt-1 max-h-32 overflow-y-auto">
+                            {route.map((wh, index) => (
+                              <li key={wh.id} className="truncate text-xs">
+                                {index + 1}. {wh.business_name}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      </div>
+                    </Popup>
+                  </Polyline>
                 )}
+
+                {/* Fallback straight-line route if real route failed */}
+                {realRouteCoordinates.length === 0 && !isLoadingRoute && (
+                  <Polyline
+                    positions={[
+                      [userLocation.lat, userLocation.lng],
+                      ...route.map(
+                        (wh) => [wh.latitude, wh.longitude] as [number, number]
+                      ),
+                    ]}
+                    pathOptions={{
+                      color: "orange",
+                      weight: 3,
+                      opacity: 0.8,
+                      dashArray: "5, 10",
+                    }}
+                  >
+                    <Popup>
+                      <div className="min-w-[280px] max-w-[350px]">
+                        <h3 className="font-semibold text-sm md:text-base">
+                          🍳 Fallback Route
+                        </h3>
+                        <p className="text-xs md:text-sm text-gray-600 mb-2">
+                          Direct route visiting all {route.length} Waffle Houses
+                          (optimization failed)
+                        </p>
+                        <p className="text-xs md:text-sm font-medium">
+                          Total Distance: {totalDistance.toFixed(1)} miles
+                        </p>
+                        {routeError && (
+                          <p className="text-xs text-orange-600 mt-1">
+                            {routeError}
+                          </p>
+                        )}
+                        <div className="text-xs text-gray-500 mt-2">
+                          <p>Route order:</p>
+                          <ol className="list-decimal list-inside mt-1 max-h-32 overflow-y-auto">
+                            {route.map((wh, index) => (
+                              <li key={wh.id} className="truncate text-xs">
+                                {index + 1}. {wh.business_name}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      </div>
+                    </Popup>
+                  </Polyline>
+                )}
+              </>
+            )}
+          </MapContainer>
+        </div>
+
+        {/* Route Details Sidebar/Bottom Sheet */}
+        {route.length > 0 && (
+          <>
+            {/* Desktop Sidebar */}
+            <div className="hidden lg:block w-80 bg-white border-l border-gray-200 overflow-y-auto">
+              <div className="p-4">
+                <RouteDetailsCard
+                  route={route}
+                  totalDistance={totalDistance}
+                  routeStats={routeStats}
+                  isLoadingRoute={isLoadingRoute}
+                  routeError={routeError}
+                />
               </div>
             </div>
-            <button
-              onClick={() => setIsPanelOpen(true)}
-              className="ml-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
-            >
-              Details
-            </button>
-          </div>
-        </div>
-      )}
 
-      {/* Map */}
-      <MapContainer
-        center={currentCenter}
-        zoom={12}
-        className="h-full w-full"
-        ref={mapRef}
-        bounds={SOUTHEAST_BOUNDS}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-
-        <MapUpdater
-          center={currentCenter}
-          waffleHouses={waffleHouses}
-          userLocation={userLocation}
-        />
-
-        {userLocation && (
-          <>
-            <Marker
-              position={[userLocation.lat, userLocation.lng]}
-              icon={
-                new L.Icon({
-                  iconUrl:
-                    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiMyNTYzZWYiLz4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iNiIgZmlsbD0id2hpdGUiLz4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMyIgZmlsbD0iIzI1NjNlZiIvPgo8L3N2Zz4K",
-                  iconSize: [24, 24],
-                  iconAnchor: [12, 12],
-                  popupAnchor: [0, -12],
-                })
-              }
-            >
-              <Popup>
-                <div className="min-w-[200px]">
-                  <h3 className="font-semibold text-sm">{userLocation.name}</h3>
-                  <p className="text-xs text-gray-600">
-                    {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
-                  </p>
+            {/* Mobile Bottom Sheet */}
+            <div className="lg:hidden">
+              <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 rounded-t-lg shadow-lg">
+                <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                      <span className="text-yellow-800 font-bold text-xs">
+                        🧇
+                      </span>
+                    </div>
+                    <h3 className="font-semibold text-gray-900">
+                      Route Details
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() =>
+                      setIsRouteDetailsExpanded(!isRouteDetailsExpanded)
+                    }
+                    className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    <svg
+                      className={`w-5 h-5 transform transition-transform ${
+                        isRouteDetailsExpanded ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
                 </div>
-              </Popup>
-            </Marker>
 
-            {/* Search radius circle */}
-            <Circle
-              center={[userLocation.lat, userLocation.lng]}
-              radius={getMapRadius(selectedRadius)}
-              pathOptions={{
-                color: "blue",
-                fillColor: "blue",
-                fillOpacity: 0.1,
-                weight: 2,
-              }}
-            >
-              <Popup>
-                <div className="min-w-[200px]">
-                  <h3 className="font-semibold text-sm">
-                    {selectedRadius}-Mile Radius
-                  </h3>
-                  <p className="text-xs text-gray-600">
-                    This circle shows a {selectedRadius}-mile radius around{" "}
-                    {userLocation.name}
-                  </p>
+                <div
+                  className={`transition-all duration-300 ease-in-out ${
+                    isRouteDetailsExpanded ? "max-h-96" : "max-h-20"
+                  } overflow-hidden`}
+                >
+                  <div className="p-4">
+                    <RouteDetailsCard
+                      route={route}
+                      totalDistance={totalDistance}
+                      routeStats={routeStats}
+                      isLoadingRoute={isLoadingRoute}
+                      routeError={routeError}
+                    />
+                  </div>
                 </div>
-              </Popup>
-            </Circle>
+              </div>
+            </div>
           </>
         )}
-
-        {/* Waffle House Markers */}
-        {waffleHouses.map((waffleHouse) => {
-          const routeIndex = route.findIndex((wh) => wh.id === waffleHouse.id);
-          const isInRoute = routeIndex !== -1;
-
-          return (
-            <Marker
-              key={waffleHouse.id}
-              position={[waffleHouse.latitude, waffleHouse.longitude]}
-              icon={
-                new L.Icon({
-                  iconUrl:
-                    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-                  iconRetinaUrl:
-                    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-                  shadowUrl:
-                    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-                  iconSize: [25, 41],
-                  iconAnchor: [12, 41],
-                  popupAnchor: [1, -34],
-                  shadowSize: [41, 41],
-                })
-              }
-            >
-              <Popup>
-                <div className="min-w-[250px] max-w-[300px]">
-                  <h3 className="font-semibold text-sm md:text-base">
-                    {waffleHouse.business_name}
-                  </h3>
-                  <p className="text-xs md:text-sm text-gray-600 mb-2">
-                    Store #{waffleHouse.store_code}
-                  </p>
-                  {isInRoute && (
-                    <p className="text-xs md:text-sm font-medium text-blue-600 mb-1">
-                      🍳 Stop #{routeIndex + 1} on route
-                    </p>
-                  )}
-                  <p className="text-xs md:text-sm">{waffleHouse.address}</p>
-                  <p className="text-xs text-gray-500 mt-1 hidden md:block">
-                    {waffleHouse.latitude.toFixed(6)},{" "}
-                    {waffleHouse.longitude.toFixed(6)}
-                  </p>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
-
-        {/* Route Polyline */}
-        {route.length > 0 && userLocation && (
-          <>
-            {/* Real road route from OpenRouteService */}
-            {realRouteCoordinates.length > 0 && (
-              <Polyline
-                positions={realRouteCoordinates}
-                pathOptions={{
-                  color: "red",
-                  weight: 4,
-                  opacity: 0.8,
-                }}
-              >
-                <Popup>
-                  <div className="min-w-[280px] max-w-[350px]">
-                    <h3 className="font-semibold text-sm md:text-base">
-                      🍳 Optimized TSP Route
-                    </h3>
-                    <p className="text-xs md:text-sm text-gray-600 mb-2">
-                      Optimized route visiting all {route.length} Waffle Houses
-                      using OpenRouteService
-                    </p>
-                    {routeStats && (
-                      <>
-                        <p className="text-xs md:text-sm font-medium">
-                          Road Distance: {routeStats.distance.toFixed(1)} miles
-                        </p>
-                        <p className="text-xs md:text-sm font-medium">
-                          Estimated Time: {routeStats.duration.toFixed(0)}{" "}
-                          minutes
-                        </p>
-                      </>
-                    )}
-                    <div className="text-xs text-gray-500 mt-2">
-                      <p>Route order:</p>
-                      <ol className="list-decimal list-inside mt-1 max-h-32 overflow-y-auto">
-                        {route.map((wh, index) => (
-                          <li key={wh.id} className="truncate text-xs">
-                            {index + 1}. {wh.business_name}
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
-                  </div>
-                </Popup>
-              </Polyline>
-            )}
-
-            {/* Fallback straight-line route if real route failed */}
-            {realRouteCoordinates.length === 0 && !isLoadingRoute && (
-              <Polyline
-                positions={[
-                  [userLocation.lat, userLocation.lng],
-                  ...route.map(
-                    (wh) => [wh.latitude, wh.longitude] as [number, number]
-                  ),
-                ]}
-                pathOptions={{
-                  color: "orange",
-                  weight: 3,
-                  opacity: 0.8,
-                  dashArray: "5, 10",
-                }}
-              >
-                <Popup>
-                  <div className="min-w-[280px] max-w-[350px]">
-                    <h3 className="font-semibold text-sm md:text-base">
-                      🍳 Fallback Route
-                    </h3>
-                    <p className="text-xs md:text-sm text-gray-600 mb-2">
-                      Direct route visiting all {route.length} Waffle Houses
-                      (optimization failed)
-                    </p>
-                    <p className="text-xs md:text-sm font-medium">
-                      Total Distance: {totalDistance.toFixed(1)} miles
-                    </p>
-                    {routeError && (
-                      <p className="text-xs text-orange-600 mt-1">
-                        {routeError}
-                      </p>
-                    )}
-                    <div className="text-xs text-gray-500 mt-2">
-                      <p>Route order:</p>
-                      <ol className="list-decimal list-inside mt-1 max-h-32 overflow-y-auto">
-                        {route.map((wh, index) => (
-                          <li key={wh.id} className="truncate text-xs">
-                            {index + 1}. {wh.business_name}
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
-                  </div>
-                </Popup>
-              </Polyline>
-            )}
-          </>
-        )}
-      </MapContainer>
+      </div>
     </div>
   );
 };

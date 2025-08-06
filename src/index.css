@@ -2,9 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom height utilities */
+.h-60vh {
+  height: 60vh;
+}
+
+.h-80vh {
+  height: 80vh;
+}
+
 /* Ensure map container takes full height */
 .leaflet-container {
-  height: 100vh;
+  height: 100%;
   width: 100%;
 }
 
@@ -56,4 +65,79 @@
 
 .slider::-moz-range-thumb:hover {
   background: #2563eb;
+}
+
+/* Smooth transitions for mobile bottom sheet */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Custom scrollbar for route details */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Mobile touch improvements */
+@media (max-width: 768px) {
+  .min-w-\[48px\] {
+    min-width: 48px;
+  }
+
+  .h-12 {
+    height: 48px;
+  }
+
+  /* Ensure proper spacing for mobile */
+  .px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .py-3 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+}
+
+/* Dark mode support (future enhancement) */
+@media (prefers-color-scheme: dark) {
+  .bg-white {
+    background-color: #1f2937;
+  }
+
+  .text-gray-900 {
+    color: #f9fafb;
+  }
+
+  .text-gray-700 {
+    color: #d1d5db;
+  }
+
+  .text-gray-600 {
+    color: #9ca3af;
+  }
+
+  .border-gray-200 {
+    border-color: #374151;
+  }
+
+  .bg-gray-50 {
+    background-color: #374151;
+  }
 }
