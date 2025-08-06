@@ -1,13 +1,13 @@
 {
     "functions": {
-        "api/waffle_houses.ts": {
+        "api/waffle_houses.js": {
             "runtime": "@vercel/node@5.3.11"
         }
     },
     "rewrites": [
         {
             "source": "/api/waffle_houses",
-            "destination": "/api/waffle_houses.ts"
+            "destination": "/api/waffle_houses.js"
         }
     ]
 }

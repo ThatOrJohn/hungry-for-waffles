@@ -1,5 +1,4 @@
 import { neon } from "@neondatabase/serverless";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 // Get database connection string from environment variables
 const databaseUrl = process.env.DATABASE_URL;
@@ -10,17 +9,7 @@ if (!databaseUrl) {
 
 const sql = neon(databaseUrl);
 
-interface WaffleHouse {
-  id: number;
-  store_code: string;
-  business_name: string;
-  latitude: number;
-  longitude: number;
-  address: string;
-}
-
-// Use named export for better ES module compatibility
-const handler = async (req: VercelRequest, res: VercelResponse) => {
+export default async function handler(req, res) {
   // Only allow GET requests
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -38,9 +27,9 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
     }
 
     // Convert to numbers and validate
-    const latitude = parseFloat(lat as string);
-    const longitude = parseFloat(lng as string);
-    const radiusMiles = parseFloat(radius as string);
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
+    const radiusMiles = parseFloat(radius);
 
     // Validate latitude and longitude
     if (isNaN(latitude) || isNaN(longitude)) {
@@ -72,7 +61,7 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
     const radiusMeters = radiusMiles * 1609.34;
 
     // Query the database using PostGIS
-    const waffleHouses = (await sql`
+    const waffleHouses = await sql`
       SELECT id, store_code, business_name, latitude, longitude, address
       FROM waffle_houses
       WHERE ST_DWithin(
@@ -84,7 +73,7 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
         geom::geography,
         ST_MakePoint(${longitude}, ${latitude})::geography
       )
-    `) as WaffleHouse[];
+    `;
 
     // Return the results
     return res.status(200).json({
@@ -105,6 +94,4 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
       message: error instanceof Error ? error.message : "Unknown error",
     });
   }
-};
-
-export default handler;
+}
