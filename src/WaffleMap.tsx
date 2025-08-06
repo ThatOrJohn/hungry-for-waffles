@@ -428,7 +428,7 @@ const RadiusSlider: React.FC<{
   onChange: (value: RadiusOption) => void;
 }> = ({ value, onChange }) => {
   // Define the key radius values and their positions
-  const radiusValues = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+  const radiusValues = [1, 25, 50];
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(e.target.value) as RadiusOption;
@@ -476,7 +476,6 @@ const RadiusSlider: React.FC<{
       {/* Labels for key values */}
       <div className="flex justify-between text-xs text-gray-500 mt-3">
         <span>1 mi</span>
-        <span>10 mi</span>
         <span>25 mi</span>
         <span>50 mi</span>
       </div>
