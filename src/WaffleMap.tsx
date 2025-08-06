@@ -100,7 +100,7 @@ const decodePolyline = (encoded: string): [number, number][] => {
     const dlng = result & 1 ? ~(result >> 1) : result >> 1;
     lng += dlng;
 
-    poly.push([lat / 1e6, lng / 1e6]);
+    poly.push([lat / 1e5, lng / 1e5]);
   }
 
   return poly;
@@ -187,9 +187,17 @@ const getOptimizedWaffleRoute = async (
 
     if (route.geometry) {
       try {
+        console.log(
+          "Raw encoded polyline:",
+          route.geometry.substring(0, 100) + "..."
+        );
         // Decode the polyline geometry from OpenRouteService
         const decodedGeometry = decodePolyline(route.geometry);
         console.log("Decoded geometry points:", decodedGeometry.length);
+        console.log(
+          "First 3 decoded coords (before conversion):",
+          decodedGeometry.slice(0, 3)
+        );
         // Convert [lng, lat] to [lat, lng] for Leaflet
         routeGeometry = decodedGeometry.map((coord): [number, number] => [
           coord[1],
