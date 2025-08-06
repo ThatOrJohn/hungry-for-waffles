@@ -182,22 +182,10 @@ const getOptimizedWaffleRoute = async (
 
     // Decode the route geometry (encoded polyline)
     let routeGeometry: [number, number][] = [];
-    console.log("Route response:", route);
-    console.log("Route geometry available:", !!route.geometry);
-
     if (route.geometry) {
       try {
-        console.log(
-          "Raw encoded polyline:",
-          route.geometry.substring(0, 100) + "..."
-        );
         // Decode the polyline geometry from OpenRouteService
         const decodedGeometry = decodePolyline(route.geometry);
-        console.log("Decoded geometry points:", decodedGeometry.length);
-        console.log(
-          "First 3 decoded coords (before conversion):",
-          decodedGeometry.slice(0, 3)
-        );
         // Convert [lng, lat] to [lat, lng] for Leaflet
         routeGeometry = decodedGeometry.map((coord): [number, number] => [
           coord[1],
@@ -531,16 +519,9 @@ const WaffleMap: React.FC = () => {
           });
 
           // Use the optimized route geometry if available, otherwise get detailed route
-          console.log(
-            "Route geometry from optimization:",
-            routeGeometry.length,
-            "points"
-          );
           if (routeGeometry.length > 0) {
             setRealRouteCoordinates(routeGeometry);
-            console.log("Using optimization route geometry");
           } else {
-            console.log("No optimization geometry, fetching detailed route");
             await fetchRealRoute(lat, lng, optimizedRoute);
           }
         } else {
@@ -942,14 +923,6 @@ const WaffleMap: React.FC = () => {
         {/* Route Polyline */}
         {route.length > 0 && userLocation && (
           <>
-            {/* Debug info */}
-            {console.log(
-              "Rendering route - realRouteCoordinates:",
-              realRouteCoordinates.length,
-              "points",
-              "First 3 coords:",
-              realRouteCoordinates.slice(0, 3)
-            )}
             {/* Real road route from OpenRouteService */}
             {realRouteCoordinates.length > 0 && (
               <Polyline
