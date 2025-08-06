@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile Safari viewport fixes */
+@supports (-webkit-touch-callout: none) {
+  .h-screen {
+    height: -webkit-fill-available;
+  }
+}
+
+/* Prevent zoom on input focus in iOS */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  input[type="text"] {
+    font-size: 16px;
+  }
+}
+
 /* Custom height utilities - keeping for potential future use */
 .h-60vh {
   height: 60vh;

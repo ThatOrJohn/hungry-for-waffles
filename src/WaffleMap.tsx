@@ -739,9 +739,9 @@ const WaffleMap: React.FC = () => {
     : BILOXI_COORDS;
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Google Maps-style Header - Pinned on Mobile */}
-      <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 sticky top-0 z-40">
+    <div className="h-screen flex flex-col">
+      {/* Google Maps-style Header - Fixed on Mobile */}
+      <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex-shrink-0 z-40">
         <div className="max-w-4xl mx-auto">
           {/* Mobile: Single row layout */}
           <div className="flex items-center space-x-2 md:space-x-3">
@@ -917,7 +917,7 @@ const WaffleMap: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col lg:flex-row">
         {/* Map Container */}
-        <div className="flex-1 h-[calc(100vh-80px)] lg:h-full relative">
+        <div className="flex-1 relative">
           <MapContainer
             center={currentCenter}
             zoom={12}
@@ -1158,62 +1158,63 @@ const WaffleMap: React.FC = () => {
               </div>
             </div>
 
-            {/* Mobile Floating Route Toggle */}
+            {/* Mobile Bottom Route Info */}
             {route.length > 0 && (
-              <div className="lg:hidden">
-                {/* Floating Route Button */}
-                <button
-                  onClick={() =>
-                    setIsRouteDetailsExpanded(!isRouteDetailsExpanded)
-                  }
-                  className="fixed bottom-4 right-4 z-50 w-12 h-12 bg-yellow-500 text-white rounded-full shadow-lg hover:bg-yellow-600 transition-colors flex items-center justify-center"
-                  title="Toggle route details"
-                >
-                  <span className="text-lg">🧇</span>
-                </button>
-
-                {/* Route Overlay */}
-                {isRouteDetailsExpanded && (
-                  <div
-                    className="fixed inset-0 z-40 bg-black bg-opacity-50"
-                    onClick={() => setIsRouteDetailsExpanded(false)}
-                  >
-                    <div
-                      className="absolute bottom-0 left-0 right-0 bg-white rounded-t-lg shadow-lg max-h-[80vh] overflow-hidden"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
-                            <span className="text-yellow-800 font-bold text-xs">
-                              🧇
-                            </span>
-                          </div>
-                          <h3 className="font-semibold text-gray-900">
-                            Route Details
-                          </h3>
-                        </div>
-                        <button
-                          onClick={() => setIsRouteDetailsExpanded(false)}
-                          className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
+              <div className="lg:hidden flex-shrink-0">
+                <div className="bg-white border-t border-gray-200 shadow-lg">
+                  {/* Route Summary Bar */}
+                  <div className="flex items-center justify-between p-3 border-b border-gray-100">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <span className="text-yellow-800 font-bold text-xs">
+                          🧇
+                        </span>
                       </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {route.length} Waffle House
+                          {route.length === 1 ? "" : "s"}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {routeStats ? (
+                            <>
+                              {routeStats.distance.toFixed(1)} mi •{" "}
+                              {routeStats.duration.toFixed(0)} min
+                            </>
+                          ) : (
+                            `${totalDistance.toFixed(1)} mi total`
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() =>
+                        setIsRouteDetailsExpanded(!isRouteDetailsExpanded)
+                      }
+                      className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      <svg
+                        className={`w-4 h-4 transform transition-transform ${
+                          isRouteDetailsExpanded ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+                  </div>
 
-                      <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
+                  {/* Expandable Route Details */}
+                  {isRouteDetailsExpanded && (
+                    <div className="max-h-64 overflow-y-auto">
+                      <div className="p-3">
                         <RouteDetailsCard
                           route={route}
                           totalDistance={totalDistance}
@@ -1223,8 +1224,8 @@ const WaffleMap: React.FC = () => {
                         />
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
           </>
