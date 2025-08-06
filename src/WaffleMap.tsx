@@ -100,7 +100,7 @@ const decodePolyline = (encoded: string): [number, number][] => {
     const dlng = result & 1 ? ~(result >> 1) : result >> 1;
     lng += dlng;
 
-    poly.push([lat / 1e5, lng / 1e5]);
+    poly.push([lat / 1e3, lng / 1e3]);
   }
 
   return poly;
@@ -223,6 +223,39 @@ const getOptimizedWaffleRoute = async (
           (wh) => [wh.latitude, wh.longitude] as [number, number]
         ),
       ];
+    }
+
+    // If the decoded geometry coordinates are too small (likely wrong),
+    // fall back to using the directions API for route geometry
+    if (routeGeometry.length > 0 && routeGeometry[0][0] < 1) {
+      console.warn(
+        "Decoded coordinates too small, using directions API fallback"
+      );
+      try {
+        // Build coordinates array for directions API
+        const coordinates: [number, number][] = [
+          [start[1], start[0]], // Start from user location [lng, lat]
+          ...optimizedRoute.map((wh): [number, number] => [
+            wh.longitude,
+            wh.latitude,
+          ]), // Add all waffle houses [lng, lat]
+        ];
+
+        const routeCoordinates = await getORSRoute(coordinates);
+        // Convert [lng, lat] back to [lat, lng] for Leaflet
+        routeGeometry = routeCoordinates
+          .filter((coord): coord is [number, number] => coord.length >= 2)
+          .map((coord): [number, number] => [coord[1], coord[0]]); // [lat, lng]
+
+        console.log(
+          "Using directions API geometry:",
+          routeGeometry.length,
+          "points"
+        );
+      } catch (directionsError) {
+        console.warn("Directions API fallback failed:", directionsError);
+        // Keep the original fallback geometry
+      }
     }
 
     return {
