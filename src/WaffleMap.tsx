@@ -13,6 +13,56 @@ import "leaflet/dist/leaflet.css";
 import axios from "axios";
 import { getMapRadius, type RadiusOption } from "./utils/units";
 
+// Toast notification component
+const Toast: React.FC<{
+  message: string;
+  type: "info" | "warning" | "error" | "success";
+  isVisible: boolean;
+  onClose: () => void;
+}> = ({ message, type, isVisible, onClose }) => {
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 5000); // Auto-hide after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, onClose]);
+
+  if (!isVisible) return null;
+
+  const bgColor = {
+    info: "bg-blue-500",
+    warning: "bg-yellow-500",
+    error: "bg-red-500",
+    success: "bg-green-500",
+  }[type];
+
+  const icon = {
+    info: "ℹ️",
+    warning: "⚠️",
+    error: "❌",
+    success: "✅",
+  }[type];
+
+  return (
+    <div className="fixed top-4 right-4 z-[1000] max-w-sm">
+      <div
+        className={`${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2`}
+      >
+        <span className="text-lg">{icon}</span>
+        <span className="text-sm font-medium">{message}</span>
+        <button
+          onClick={onClose}
+          className="ml-auto text-white hover:text-gray-200 text-lg font-bold"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // Fix for default marker icons
 delete (L.Icon.Default.prototype as { _getIconUrl?: string })._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -109,7 +159,9 @@ const decodePolyline = (encoded: string): [number, number][] => {
 // Get optimized route using OpenRouteService Optimization API
 const getOptimizedWaffleRoute = async (
   start: [number, number],
-  waffleHouses: WaffleHouse[]
+  waffleHouses: WaffleHouse[],
+  onRateLimitFallback?: () => void,
+  onGeometryFallback?: () => void
 ): Promise<{
   optimizedRoute: WaffleHouse[];
   routeGeometry: [number, number][];
@@ -219,6 +271,9 @@ const getOptimizedWaffleRoute = async (
       console.warn(
         "Decoded coordinates too small, using directions API fallback"
       );
+      if (onGeometryFallback) {
+        onGeometryFallback();
+      }
       try {
         // Build coordinates array for directions API
         const coordinates: [number, number][] = [
@@ -254,12 +309,98 @@ const getOptimizedWaffleRoute = async (
     };
   } catch (error) {
     console.error("Error calling OpenRouteService Optimization API:", error);
+
+    // Check if this is a rate limit error
+    const isRateLimitError =
+      (error instanceof Error && error.message.includes("429")) ||
+      (axios.isAxiosError(error) && error.response?.status === 429) ||
+      (axios.isAxiosError(error) &&
+        error.response?.data?.error?.includes("rate limit"));
+
+    if (isRateLimitError && onRateLimitFallback) {
+      onRateLimitFallback();
+
+      // Use fallback nearest neighbor algorithm
+      console.log(
+        "Using fallback nearest neighbor algorithm due to rate limiting"
+      );
+      const fallbackRoute = nearestNeighborTSP(start, waffleHouses);
+
+      // Calculate simple distance for fallback route
+      let totalDistance = 0;
+      let currentPoint = start;
+
+      for (const wh of fallbackRoute) {
+        const distance = Math.sqrt(
+          Math.pow(currentPoint[0] - wh.latitude, 2) +
+            Math.pow(currentPoint[1] - wh.longitude, 2)
+        );
+        totalDistance += distance * 69; // Convert degrees to miles (rough approximation)
+        currentPoint = [wh.latitude, wh.longitude];
+      }
+
+      // Create simple point-to-point geometry for fallback
+      const routeGeometry: [number, number][] = [
+        [start[0], start[1]], // Start point
+        ...fallbackRoute.map(
+          (wh) => [wh.latitude, wh.longitude] as [number, number]
+        ),
+      ];
+
+      return {
+        optimizedRoute: fallbackRoute,
+        routeGeometry,
+        totalDistance,
+        totalDuration: totalDistance * 2, // Rough estimate: 2 minutes per mile
+      };
+    }
+
     throw new Error(
       error instanceof Error
         ? error.message
         : "Failed to optimize route with OpenRouteService"
     );
   }
+};
+
+// Simple nearest neighbor TSP algorithm as fallback
+const nearestNeighborTSP = (
+  start: [number, number],
+  waffleHouses: WaffleHouse[]
+): WaffleHouse[] => {
+  if (waffleHouses.length === 0) return [];
+
+  const unvisited = [...waffleHouses];
+  const route: WaffleHouse[] = [];
+
+  // Start from user location
+  let currentPoint = start;
+
+  while (unvisited.length > 0) {
+    // Find nearest unvisited waffle house
+    let nearestIndex = 0;
+    let minDistance = Infinity;
+
+    for (let i = 0; i < unvisited.length; i++) {
+      const wh = unvisited[i];
+      const distance = Math.sqrt(
+        Math.pow(currentPoint[0] - wh.latitude, 2) +
+          Math.pow(currentPoint[1] - wh.longitude, 2)
+      );
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestIndex = i;
+      }
+    }
+
+    // Add nearest waffle house to route
+    const nearest = unvisited.splice(nearestIndex, 1)[0];
+    route.push(nearest);
+    currentPoint = [nearest.latitude, nearest.longitude];
+  }
+
+  return route;
 };
 
 // Helper function to call the ORS Directions API for detailed route geometry
@@ -507,6 +648,25 @@ const WaffleMap: React.FC = () => {
   const [isRouteDetailsExpanded, setIsRouteDetailsExpanded] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
 
+  // Toast state
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "info" | "warning" | "error" | "success";
+    isVisible: boolean;
+  }>({
+    message: "",
+    type: "info",
+    isVisible: false,
+  });
+
+  // Show toast notification
+  const showToast = (
+    message: string,
+    type: "info" | "warning" | "error" | "success"
+  ) => {
+    setToast({ message, type, isVisible: true });
+  };
+
   // Fetch nearby Waffle Houses
   const fetchWaffleHouses = async (
     lat: number,
@@ -539,7 +699,17 @@ const WaffleMap: React.FC = () => {
             totalDuration,
           } = await getOptimizedWaffleRoute(
             [lat, lng], // Start from user location [lat, lng]
-            data.data
+            data.data,
+            () =>
+              showToast(
+                "Rate limited by OpenRouteService. Using nearest neighbor fallback algorithm.",
+                "warning"
+              ),
+            () =>
+              showToast(
+                "Using directions API fallback for route geometry.",
+                "info"
+              )
           );
           setRoute(optimizedRoute);
           setTotalDistance(calculatedDistance);
@@ -780,6 +950,13 @@ const WaffleMap: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
+      {/* Toast Notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
+      />
       {/* Google Maps-style Header - Fixed on Mobile */}
       <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex-shrink-0 z-40">
         <div className="max-w-4xl mx-auto">
