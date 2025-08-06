@@ -751,7 +751,7 @@ const WaffleMap: React.FC = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for a location..."
+                placeholder="Enter location"
                 className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 onKeyPress={(e) => e.key === "Enter" && searchLocation()}
               />
