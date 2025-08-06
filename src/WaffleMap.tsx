@@ -734,6 +734,34 @@ const WaffleMap: React.FC = () => {
     }
   }, [userLocation, selectedRadius]);
 
+  // Force map resize after component mounts to fix rendering issues
+  useEffect(() => {
+    if (mapRef.current) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        mapRef.current?.invalidateSize();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // Handle window resize and orientation changes
+  useEffect(() => {
+    const handleResize = () => {
+      if (mapRef.current) {
+        mapRef.current.invalidateSize();
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
+  }, []);
+
   const currentCenter: [number, number] = userLocation
     ? [userLocation.lat, userLocation.lng]
     : BILOXI_COORDS;
@@ -915,9 +943,9 @@ const WaffleMap: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col lg:flex-row">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
         {/* Map Container */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative min-h-0">
           <MapContainer
             center={currentCenter}
             zoom={12}
