@@ -740,11 +740,11 @@ const WaffleMap: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Google Maps-style Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+      {/* Google Maps-style Header - Pinned on Mobile */}
+      <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto">
-          {/* Mobile: Stack controls vertically */}
-          <div className="md:flex md:items-center md:space-x-3 space-y-3 md:space-y-0">
+          {/* Mobile: Single row layout */}
+          <div className="flex items-center space-x-2 md:space-x-3">
             {/* Search Input */}
             <div className="flex-1 relative">
               <input
@@ -752,12 +752,12 @@ const WaffleMap: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for a location..."
-                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 onKeyPress={(e) => e.key === "Enter" && searchLocation()}
               />
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
                 <svg
-                  className="w-5 h-5 text-gray-400"
+                  className="w-4 h-4 text-gray-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -772,75 +772,36 @@ const WaffleMap: React.FC = () => {
               </div>
             </div>
 
-            {/* Button Row */}
-            <div className="flex items-center space-x-2 md:space-x-3">
-              {/* Location Button */}
-              <button
-                onClick={getCurrentLocation}
-                disabled={isLoading}
-                className="min-w-[48px] h-12 px-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors flex items-center justify-center"
-                title="Use my location"
-              >
-                {isLoading ? (
-                  <svg
-                    className="w-5 h-5 animate-spin"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                ) : (
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                )}
-              </button>
-
-              {/* Search Button */}
-              <button
-                onClick={searchLocation}
-                disabled={isLoading || !searchQuery.trim()}
-                className="min-w-[48px] h-12 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors text-sm font-medium"
-              >
-                Search
-              </button>
-
-              {/* Radius Toggle */}
-              <button
-                onClick={() => setIsRadiusExpanded(!isRadiusExpanded)}
-                className="min-w-[48px] h-12 px-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
-                title="Radius settings"
-              >
+            {/* Location Button */}
+            <button
+              onClick={getCurrentLocation}
+              disabled={isLoading}
+              className="min-w-[40px] h-10 px-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors flex items-center justify-center"
+              title="Use my location"
+            >
+              {isLoading ? (
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4 animate-spin"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              ) : (
+                <svg
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -849,17 +810,53 @@ const WaffleMap: React.FC = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
                   />
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-              </button>
-            </div>
+              )}
+            </button>
+
+            {/* Search Button */}
+            <button
+              onClick={searchLocation}
+              disabled={isLoading || !searchQuery.trim()}
+              className="min-w-[40px] h-10 px-3 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors text-xs font-medium"
+            >
+              Search
+            </button>
+
+            {/* Radius Toggle */}
+            <button
+              onClick={() => setIsRadiusExpanded(!isRadiusExpanded)}
+              className="min-w-[40px] h-10 px-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
+              title="Radius settings"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            </button>
           </div>
 
           {/* Radius Slider - Collapsible */}
@@ -907,7 +904,7 @@ const WaffleMap: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col lg:flex-row">
         {/* Map Container */}
-        <div className="flex-1 h-[calc(100vh-200px)] lg:h-full relative">
+        <div className="flex-1 h-[calc(100vh-80px)] lg:h-full relative">
           <MapContainer
             center={currentCenter}
             zoom={12}
@@ -1148,61 +1145,75 @@ const WaffleMap: React.FC = () => {
               </div>
             </div>
 
-            {/* Mobile Bottom Sheet */}
-            <div className="lg:hidden">
-              <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 rounded-t-lg shadow-lg">
-                <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <span className="text-yellow-800 font-bold text-xs">
-                        🧇
-                      </span>
-                    </div>
-                    <h3 className="font-semibold text-gray-900">
-                      Route Details
-                    </h3>
-                  </div>
-                  <button
-                    onClick={() =>
-                      setIsRouteDetailsExpanded(!isRouteDetailsExpanded)
-                    }
-                    className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    <svg
-                      className={`w-5 h-5 transform transition-transform ${
-                        isRouteDetailsExpanded ? "rotate-180" : ""
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                <div
-                  className={`transition-all duration-300 ease-in-out ${
-                    isRouteDetailsExpanded ? "max-h-80" : "max-h-16"
-                  } overflow-hidden`}
+            {/* Mobile Floating Route Toggle */}
+            {route.length > 0 && (
+              <div className="lg:hidden">
+                {/* Floating Route Button */}
+                <button
+                  onClick={() =>
+                    setIsRouteDetailsExpanded(!isRouteDetailsExpanded)
+                  }
+                  className="fixed bottom-4 right-4 z-50 w-12 h-12 bg-yellow-500 text-white rounded-full shadow-lg hover:bg-yellow-600 transition-colors flex items-center justify-center"
+                  title="Toggle route details"
                 >
-                  <div className="p-4">
-                    <RouteDetailsCard
-                      route={route}
-                      totalDistance={totalDistance}
-                      routeStats={routeStats}
-                      isLoadingRoute={isLoadingRoute}
-                      routeError={routeError}
-                    />
+                  <span className="text-lg">🧇</span>
+                </button>
+
+                {/* Route Overlay */}
+                {isRouteDetailsExpanded && (
+                  <div
+                    className="fixed inset-0 z-40 bg-black bg-opacity-50"
+                    onClick={() => setIsRouteDetailsExpanded(false)}
+                  >
+                    <div
+                      className="absolute bottom-0 left-0 right-0 bg-white rounded-t-lg shadow-lg max-h-[80vh] overflow-hidden"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                            <span className="text-yellow-800 font-bold text-xs">
+                              🧇
+                            </span>
+                          </div>
+                          <h3 className="font-semibold text-gray-900">
+                            Route Details
+                          </h3>
+                        </div>
+                        <button
+                          onClick={() => setIsRouteDetailsExpanded(false)}
+                          className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+
+                      <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
+                        <RouteDetailsCard
+                          route={route}
+                          totalDistance={totalDistance}
+                          routeStats={routeStats}
+                          isLoadingRoute={isLoadingRoute}
+                          routeError={routeError}
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
-            </div>
+            )}
           </>
         )}
       </div>
