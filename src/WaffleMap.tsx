@@ -33,79 +33,186 @@ const SOUTHEAST_BOUNDS: L.LatLngBoundsExpression = [
   [35.0, -75.0], // Northeast
 ];
 
-// Haversine distance calculation function
-const haversineDistance = (
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number
-): number => {
-  const R = 3959; // Earth's radius in miles
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
+// Types for OpenRouteService Optimization API
+interface ORSJob {
+  id: number;
+  location: [number, number]; // [lng, lat]
+}
 
-// Greedy nearest-neighbor algorithm for TSP
-const solveHungryForWaffles = (
-  userLat: number,
-  userLng: number,
-  waffleHouses: WaffleHouse[]
-): { route: WaffleHouse[]; totalDistance: number } => {
-  if (waffleHouses.length === 0) {
-    return { route: [], totalDistance: 0 };
+interface ORSVehicle {
+  id: number;
+  start: [number, number]; // [lng, lat]
+  return_to_depot: boolean;
+}
+
+interface ORSOptimizationRequest {
+  jobs: ORSJob[];
+  vehicles: ORSVehicle[];
+}
+
+interface ORSOptimizationResponse {
+  unassigned: unknown[];
+  routes: Array<{
+    vehicle: number;
+    steps: Array<{
+      job: number;
+      arrival: number;
+      duration: number;
+      distance: number;
+    }>;
+    distance: number;
+    duration: number;
+    geometry: string; // Encoded polyline
+  }>;
+}
+
+// Simple polyline decoder for route geometry
+const decodePolyline = (encoded: string): [number, number][] => {
+  const poly: [number, number][] = [];
+  let index = 0;
+  const len = encoded.length;
+  let lat = 0,
+    lng = 0;
+
+  while (index < len) {
+    let shift = 0,
+      result = 0;
+
+    do {
+      const b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (result >= 0x20);
+
+    const dlat = result & 1 ? ~(result >> 1) : result >> 1;
+    lat += dlat;
+
+    shift = 0;
+    result = 0;
+
+    do {
+      const b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (result >= 0x20);
+
+    const dlng = result & 1 ? ~(result >> 1) : result >> 1;
+    lng += dlng;
+
+    poly.push([lat / 1e5, lng / 1e5]);
   }
 
-  const unvisited = [...waffleHouses];
-  const route: WaffleHouse[] = [];
-  let currentLat = userLat;
-  let currentLng = userLng;
-  let totalDistance = 0;
+  return poly;
+};
 
-  while (unvisited.length > 0) {
-    // Find the nearest unvisited Waffle House
-    let nearestIndex = 0;
-    let nearestDistance = haversineDistance(
-      currentLat,
-      currentLng,
-      unvisited[0].latitude,
-      unvisited[0].longitude
+// Get optimized route using OpenRouteService Optimization API
+const getOptimizedWaffleRoute = async (
+  start: [number, number],
+  waffleHouses: WaffleHouse[]
+): Promise<{
+  optimizedRoute: WaffleHouse[];
+  routeGeometry: [number, number][];
+  totalDistance: number;
+  totalDuration: number;
+}> => {
+  const apiKey = import.meta.env.VITE_OPENROUTE_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "OpenRouteService API key not found. Please add VITE_OPENROUTE_API_KEY to your .env file."
+    );
+  }
+
+  if (waffleHouses.length === 0) {
+    return {
+      optimizedRoute: [],
+      routeGeometry: [],
+      totalDistance: 0,
+      totalDuration: 0,
+    };
+  }
+
+  // Prepare jobs for the optimization API
+  const jobs: ORSJob[] = waffleHouses.map((wh, index) => ({
+    id: index + 1,
+    location: [wh.longitude, wh.latitude] as [number, number], // [lng, lat]
+  }));
+
+  // Prepare vehicle (starting from user location)
+  const vehicles: ORSVehicle[] = [
+    {
+      id: 1,
+      start: [start[1], start[0]] as [number, number], // Convert [lat, lng] to [lng, lat]
+      return_to_depot: true,
+    },
+  ];
+
+  const requestBody: ORSOptimizationRequest = {
+    jobs,
+    vehicles,
+  };
+
+  try {
+    const response = await axios.post<ORSOptimizationResponse>(
+      "https://api.openrouteservice.org/optimization",
+      requestBody,
+      {
+        headers: {
+          Authorization: apiKey,
+          "Content-Type": "application/json",
+        },
+      }
     );
 
-    for (let i = 1; i < unvisited.length; i++) {
-      const distance = haversineDistance(
-        currentLat,
-        currentLng,
-        unvisited[i].latitude,
-        unvisited[i].longitude
-      );
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearestIndex = i;
+    const route = response.data.routes[0];
+    if (!route || !route.steps || route.steps.length === 0) {
+      throw new Error("No route found in optimization response");
+    }
+
+    // Map the optimized job order back to Waffle House data
+    const optimizedRoute: WaffleHouse[] = route.steps
+      .filter((step) => step.job !== undefined) // Filter out depot steps
+      .map((step) => waffleHouses[step.job - 1]); // job IDs are 1-indexed
+
+    // Decode the route geometry (encoded polyline)
+    let routeGeometry: [number, number][] = [];
+    if (route.geometry) {
+      try {
+        // Decode the polyline geometry from OpenRouteService
+        const decodedGeometry = decodePolyline(route.geometry);
+        // Convert [lng, lat] to [lat, lng] for Leaflet
+        routeGeometry = decodedGeometry.map((coord): [number, number] => [
+          coord[1],
+          coord[0],
+        ]);
+      } catch (geometryError) {
+        console.warn("Could not decode route geometry:", geometryError);
+        // Fallback to simple point-to-point geometry
+        routeGeometry = [
+          [start[0], start[1]], // Start point
+          ...optimizedRoute.map(
+            (wh) => [wh.latitude, wh.longitude] as [number, number]
+          ),
+        ];
       }
     }
 
-    // Add the nearest Waffle House to the route
-    const nearest = unvisited.splice(nearestIndex, 1)[0];
-    route.push(nearest);
-    totalDistance += nearestDistance;
-
-    // Update current position
-    currentLat = nearest.latitude;
-    currentLng = nearest.longitude;
+    return {
+      optimizedRoute,
+      routeGeometry,
+      totalDistance: route.distance / 1609.34, // Convert meters to miles
+      totalDuration: route.duration / 60, // Convert seconds to minutes
+    };
+  } catch (error) {
+    console.error("Error calling OpenRouteService Optimization API:", error);
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Failed to optimize route with OpenRouteService"
+    );
   }
-
-  return { route, totalDistance };
 };
 
-// Helper function to call the ORS Directions API
+// Helper function to call the ORS Directions API for detailed route geometry
 async function getORSRoute(
   coordinates: [number, number][]
 ): Promise<number[][]> {
@@ -244,7 +351,7 @@ const RouteDetails: React.FC<{
           <div className="text-orange-600 text-xs">{routeError}</div>
         )}
         <div className="text-xs text-blue-600 mt-2">
-          Route follows greedy nearest-neighbor algorithm
+          Route optimized using OpenRouteService TSP solver
           {routeStats && " with real road paths"}
         </div>
       </div>
@@ -343,13 +450,30 @@ const WaffleMap: React.FC = () => {
 
         // Solve the "Hungry for Waffles Problem" when we have waffle houses
         if (data.data.length > 0) {
-          const { route: calculatedRoute, totalDistance: calculatedDistance } =
-            solveHungryForWaffles(lat, lng, data.data);
-          setRoute(calculatedRoute);
+          const {
+            optimizedRoute,
+            routeGeometry,
+            totalDistance: calculatedDistance,
+            totalDuration,
+          } = await getOptimizedWaffleRoute(
+            [lat, lng], // Start from user location [lat, lng]
+            data.data
+          );
+          setRoute(optimizedRoute);
           setTotalDistance(calculatedDistance);
 
-          // Get real road route from OpenRouteService
-          await fetchRealRoute(lat, lng, calculatedRoute);
+          // Set route statistics from optimization
+          setRouteStats({
+            distance: calculatedDistance,
+            duration: totalDuration,
+          });
+
+          // Use the optimized route geometry if available, otherwise get detailed route
+          if (routeGeometry.length > 0) {
+            setRealRouteCoordinates(routeGeometry);
+          } else {
+            await fetchRealRoute(lat, lng, optimizedRoute);
+          }
         } else {
           setRoute([]);
           setTotalDistance(0);
@@ -762,11 +886,11 @@ const WaffleMap: React.FC = () => {
                 <Popup>
                   <div>
                     <h3 className="font-semibold text-lg">
-                      🍳 Real Road Route
+                      🍳 Optimized TSP Route
                     </h3>
                     <p className="text-sm text-gray-600 mb-2">
-                      Actual driving route visiting all {route.length} Waffle
-                      Houses
+                      Optimized route visiting all {route.length} Waffle Houses
+                      using OpenRouteService
                     </p>
                     {routeStats && (
                       <>
@@ -812,11 +936,10 @@ const WaffleMap: React.FC = () => {
               >
                 <Popup>
                   <div>
-                    <h3 className="font-semibold text-lg">
-                      🍳 Straight-Line Route
-                    </h3>
+                    <h3 className="font-semibold text-lg">🍳 Fallback Route</h3>
                     <p className="text-sm text-gray-600 mb-2">
                       Direct route visiting all {route.length} Waffle Houses
+                      (optimization failed)
                     </p>
                     <p className="text-sm font-medium">
                       Total Distance: {totalDistance.toFixed(1)} miles

@@ -10,7 +10,7 @@ A React application that solves the "Hungry for Waffles Problem" - finding the o
 - 🍳 Waffle House location finder
 - 🛣️ Real road routing with OpenRouteService
 - 📊 Route statistics (distance, duration)
-- 🎯 Greedy nearest-neighbor algorithm for route optimization
+- 🎯 TSP (Traveling Salesman Problem) optimization using OpenRouteService
 
 ## Setup
 
@@ -52,14 +52,14 @@ The application will be available at `http://localhost:5173`
 
 1. **Location Detection**: Gets the user's current location or allows manual search
 2. **Waffle House Discovery**: Finds nearby Waffle House locations within a specified radius
-3. **Route Optimization**: Uses a greedy nearest-neighbor algorithm to find an efficient route
+3. **Route Optimization**: Uses OpenRouteService's TSP solver to find the optimal route visiting all Waffle Houses
 4. **Real Road Routing**: Integrates with OpenRouteService to get actual driving routes
 5. **Visualization**: Displays the route on an interactive map with statistics
 
 ## API Integration
 
 - **Waffle House API**: Custom API endpoint for finding nearby locations
-- **OpenRouteService**: For real road routing and navigation
+- **OpenRouteService**: For real road routing, navigation, and TSP optimization
 - **OpenStreetMap Nominatim**: For location search and geocoding
 
 ## Technologies Used
