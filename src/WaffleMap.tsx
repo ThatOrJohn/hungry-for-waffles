@@ -372,18 +372,18 @@ const RouteDetails: React.FC<{
   return (
     <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-blue-800">
+        <h3 className="font-semibold text-blue-800 text-sm md:text-base">
           🍳 Hungry for Waffles Route
         </h3>
         <button
           onClick={onToggleExpanded}
-          className="text-blue-600 hover:text-blue-800 transition-colors"
+          className="text-blue-600 hover:text-blue-800 transition-colors p-1"
         >
           {isExpanded ? "▼" : "▶"}
         </button>
       </div>
 
-      <div className="text-sm text-blue-700 space-y-1">
+      <div className="text-xs md:text-sm text-blue-700 space-y-1">
         <div>📍 {route.length} stops</div>
         <div>🛣️ Total distance: {totalDistance.toFixed(1)} miles</div>
         {routeStats && (
@@ -409,35 +409,37 @@ const RouteDetails: React.FC<{
       {/* Expandable route details */}
       {isExpanded && (
         <div className="mt-4 pt-4 border-t border-blue-200">
-          <h4 className="font-medium text-blue-800 mb-3">Route Details:</h4>
-          <div className="space-y-3 max-h-64 overflow-y-auto">
+          <h4 className="font-medium text-blue-800 mb-3 text-sm">
+            Route Details:
+          </h4>
+          <div className="space-y-3 max-h-48 md:max-h-64 overflow-y-auto">
             {route.map((waffleHouse, index) => (
               <div
                 key={waffleHouse.id}
-                className="bg-white p-3 rounded-md border border-blue-100"
+                className="bg-white p-2 md:p-3 rounded-md border border-blue-100"
               >
-                <div className="flex items-start space-x-3">
+                <div className="flex items-start space-x-2 md:space-x-3">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-yellow-800 font-bold text-sm">
+                    <div className="w-6 h-6 md:w-8 md:h-8 bg-yellow-400 rounded-full flex items-center justify-center text-yellow-800 font-bold text-xs md:text-sm">
                       🧇
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
+                    <div className="flex flex-wrap items-center gap-1 md:gap-2 mb-1">
+                      <span className="bg-blue-100 text-blue-800 text-xs font-medium px-1 md:px-2 py-1 rounded">
                         Stop #{index + 1}
                       </span>
                       <span className="text-xs text-gray-500">
                         Store #{waffleHouse.store_code}
                       </span>
                     </div>
-                    <h5 className="font-medium text-gray-900 text-sm mb-1">
+                    <h5 className="font-medium text-gray-900 text-xs md:text-sm mb-1">
                       {waffleHouse.business_name}
                     </h5>
-                    <p className="text-xs text-gray-600 mb-2">
+                    <p className="text-xs text-gray-600 mb-1 md:mb-2">
                       📍 {waffleHouse.address}
                     </p>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 hidden md:block">
                       📍 {waffleHouse.latitude.toFixed(6)},{" "}
                       {waffleHouse.longitude.toFixed(6)}
                     </div>
@@ -473,6 +475,7 @@ const WaffleMap: React.FC = () => {
     duration: number;
   } | null>(null);
   const [isRouteExpanded, setIsRouteExpanded] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
 
   // Fetch nearby Waffle Houses
@@ -708,22 +711,66 @@ const WaffleMap: React.FC = () => {
 
   return (
     <div className="h-screen w-full relative">
-      {/* Search Controls */}
-      <div className="absolute top-4 left-4 z-[1000] bg-white rounded-lg shadow-lg p-4 max-w-sm">
-        <div className="space-y-3">
+      {/* Mobile Backdrop Overlay */}
+      {isPanelOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-[999]"
+          onClick={() => setIsPanelOpen(false)}
+        />
+      )}
+
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsPanelOpen(!isPanelOpen)}
+        className="md:hidden absolute top-4 left-4 z-[1001] bg-white rounded-lg shadow-lg p-3 border border-gray-200"
+        aria-label="Toggle menu"
+      >
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          {isPanelOpen ? (
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          ) : (
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          )}
+        </svg>
+      </button>
+
+      {/* Search Controls - Mobile Responsive */}
+      <div
+        className={`absolute top-4 left-4 z-[1000] bg-white rounded-lg shadow-lg transition-all duration-300 ease-in-out ${
+          isPanelOpen
+            ? "translate-x-0 opacity-100"
+            : "md:translate-x-0 md:opacity-100 -translate-x-full opacity-0 md:static"
+        } ${isPanelOpen ? "w-[calc(100vw-2rem)] max-w-sm" : "w-full max-w-sm"}`}
+      >
+        <div className="p-4 space-y-3">
           <div className="flex space-x-2">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for a location..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               onKeyPress={(e) => e.key === "Enter" && searchLocation()}
             />
             <button
               onClick={searchLocation}
               disabled={isLoading}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 text-sm whitespace-nowrap"
             >
               {isLoading ? "..." : "Search"}
             </button>
@@ -732,7 +779,7 @@ const WaffleMap: React.FC = () => {
           <button
             onClick={getCurrentLocation}
             disabled={isLoading}
-            className="w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
+            className="w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 text-sm"
           >
             {isLoading ? "Getting Location..." : "Use My Location"}
           </button>
@@ -803,6 +850,37 @@ const WaffleMap: React.FC = () => {
         </div>
       </div>
 
+      {/* Mobile Route Summary - Fixed at bottom when panel is closed */}
+      {route.length > 0 && !isPanelOpen && (
+        <div className="md:hidden absolute bottom-4 left-4 right-4 z-[1000] bg-white rounded-lg shadow-lg p-3 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="text-sm font-medium text-gray-900 flex items-center">
+                <span className="mr-2">🍳</span>
+                {route.length} Waffle House{route.length === 1 ? "" : "s"}
+              </div>
+              <div className="text-xs text-gray-600 flex items-center mt-1">
+                <span className="mr-2">🛣️</span>
+                {routeStats ? (
+                  <>
+                    {routeStats.distance.toFixed(1)} mi •{" "}
+                    {routeStats.duration.toFixed(0)} min
+                  </>
+                ) : (
+                  `${totalDistance.toFixed(1)} mi total`
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => setIsPanelOpen(true)}
+              className="ml-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+            >
+              Details
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Map */}
       <MapContainer
         center={currentCenter}
@@ -837,9 +915,9 @@ const WaffleMap: React.FC = () => {
               }
             >
               <Popup>
-                <div>
-                  <h3 className="font-semibold">{userLocation.name}</h3>
-                  <p className="text-sm text-gray-600">
+                <div className="min-w-[200px]">
+                  <h3 className="font-semibold text-sm">{userLocation.name}</h3>
+                  <p className="text-xs text-gray-600">
                     {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
                   </p>
                 </div>
@@ -858,11 +936,11 @@ const WaffleMap: React.FC = () => {
               }}
             >
               <Popup>
-                <div>
-                  <h3 className="font-semibold">
+                <div className="min-w-[200px]">
+                  <h3 className="font-semibold text-sm">
                     {selectedRadius}-Mile Radius
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs text-gray-600">
                     This circle shows a {selectedRadius}-mile radius around{" "}
                     {userLocation.name}
                   </p>
@@ -897,20 +975,20 @@ const WaffleMap: React.FC = () => {
               }
             >
               <Popup>
-                <div>
-                  <h3 className="font-semibold text-lg">
+                <div className="min-w-[250px] max-w-[300px]">
+                  <h3 className="font-semibold text-sm md:text-base">
                     {waffleHouse.business_name}
                   </h3>
-                  <p className="text-sm text-gray-600 mb-2">
+                  <p className="text-xs md:text-sm text-gray-600 mb-2">
                     Store #{waffleHouse.store_code}
                   </p>
                   {isInRoute && (
-                    <p className="text-sm font-medium text-blue-600 mb-1">
+                    <p className="text-xs md:text-sm font-medium text-blue-600 mb-1">
                       🍳 Stop #{routeIndex + 1} on route
                     </p>
                   )}
-                  <p className="text-sm">{waffleHouse.address}</p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs md:text-sm">{waffleHouse.address}</p>
+                  <p className="text-xs text-gray-500 mt-1 hidden md:block">
                     {waffleHouse.latitude.toFixed(6)},{" "}
                     {waffleHouse.longitude.toFixed(6)}
                   </p>
@@ -934,20 +1012,20 @@ const WaffleMap: React.FC = () => {
                 }}
               >
                 <Popup>
-                  <div>
-                    <h3 className="font-semibold text-lg">
+                  <div className="min-w-[280px] max-w-[350px]">
+                    <h3 className="font-semibold text-sm md:text-base">
                       🍳 Optimized TSP Route
                     </h3>
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-xs md:text-sm text-gray-600 mb-2">
                       Optimized route visiting all {route.length} Waffle Houses
                       using OpenRouteService
                     </p>
                     {routeStats && (
                       <>
-                        <p className="text-sm font-medium">
+                        <p className="text-xs md:text-sm font-medium">
                           Road Distance: {routeStats.distance.toFixed(1)} miles
                         </p>
-                        <p className="text-sm font-medium">
+                        <p className="text-xs md:text-sm font-medium">
                           Estimated Time: {routeStats.duration.toFixed(0)}{" "}
                           minutes
                         </p>
@@ -955,9 +1033,9 @@ const WaffleMap: React.FC = () => {
                     )}
                     <div className="text-xs text-gray-500 mt-2">
                       <p>Route order:</p>
-                      <ol className="list-decimal list-inside mt-1">
+                      <ol className="list-decimal list-inside mt-1 max-h-32 overflow-y-auto">
                         {route.map((wh, index) => (
-                          <li key={wh.id} className="truncate">
+                          <li key={wh.id} className="truncate text-xs">
                             {index + 1}. {wh.business_name}
                           </li>
                         ))}
@@ -985,13 +1063,15 @@ const WaffleMap: React.FC = () => {
                 }}
               >
                 <Popup>
-                  <div>
-                    <h3 className="font-semibold text-lg">🍳 Fallback Route</h3>
-                    <p className="text-sm text-gray-600 mb-2">
+                  <div className="min-w-[280px] max-w-[350px]">
+                    <h3 className="font-semibold text-sm md:text-base">
+                      🍳 Fallback Route
+                    </h3>
+                    <p className="text-xs md:text-sm text-gray-600 mb-2">
                       Direct route visiting all {route.length} Waffle Houses
                       (optimization failed)
                     </p>
-                    <p className="text-sm font-medium">
+                    <p className="text-xs md:text-sm font-medium">
                       Total Distance: {totalDistance.toFixed(1)} miles
                     </p>
                     {routeError && (
@@ -1001,9 +1081,9 @@ const WaffleMap: React.FC = () => {
                     )}
                     <div className="text-xs text-gray-500 mt-2">
                       <p>Route order:</p>
-                      <ol className="list-decimal list-inside mt-1">
+                      <ol className="list-decimal list-inside mt-1 max-h-32 overflow-y-auto">
                         {route.map((wh, index) => (
-                          <li key={wh.id} className="truncate">
+                          <li key={wh.id} className="truncate text-xs">
                             {index + 1}. {wh.business_name}
                           </li>
                         ))}
