@@ -5,6 +5,7 @@ import {
   Marker,
   Popup,
   Circle,
+  Polyline,
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
@@ -30,6 +31,78 @@ const SOUTHEAST_BOUNDS: L.LatLngBoundsExpression = [
   [25.0, -85.0], // Southwest
   [35.0, -75.0], // Northeast
 ];
+
+// Haversine distance calculation function
+const haversineDistance = (
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number => {
+  const R = 3959; // Earth's radius in miles
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+// Greedy nearest-neighbor algorithm for TSP
+const solveHungryForWaffles = (
+  userLat: number,
+  userLng: number,
+  waffleHouses: WaffleHouse[]
+): { route: WaffleHouse[]; totalDistance: number } => {
+  if (waffleHouses.length === 0) {
+    return { route: [], totalDistance: 0 };
+  }
+
+  const unvisited = [...waffleHouses];
+  const route: WaffleHouse[] = [];
+  let currentLat = userLat;
+  let currentLng = userLng;
+  let totalDistance = 0;
+
+  while (unvisited.length > 0) {
+    // Find the nearest unvisited Waffle House
+    let nearestIndex = 0;
+    let nearestDistance = haversineDistance(
+      currentLat,
+      currentLng,
+      unvisited[0].latitude,
+      unvisited[0].longitude
+    );
+
+    for (let i = 1; i < unvisited.length; i++) {
+      const distance = haversineDistance(
+        currentLat,
+        currentLng,
+        unvisited[i].latitude,
+        unvisited[i].longitude
+      );
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = i;
+      }
+    }
+
+    // Add the nearest Waffle House to the route
+    const nearest = unvisited.splice(nearestIndex, 1)[0];
+    route.push(nearest);
+    totalDistance += nearestDistance;
+
+    // Update current position
+    currentLat = nearest.latitude;
+    currentLng = nearest.longitude;
+  }
+
+  return { route, totalDistance };
+};
 
 interface Location {
   lat: number;
@@ -101,6 +174,8 @@ const WaffleMap: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [waffleHouses, setWaffleHouses] = useState<WaffleHouse[]>([]);
   const [waffleHouseError, setWaffleHouseError] = useState<string | null>(null);
+  const [route, setRoute] = useState<WaffleHouse[]>([]);
+  const [totalDistance, setTotalDistance] = useState<number>(0);
   const mapRef = useRef<L.Map | null>(null);
 
   // Fetch nearby Waffle Houses
@@ -125,6 +200,17 @@ const WaffleMap: React.FC = () => {
 
       if (data.success) {
         setWaffleHouses(data.data);
+
+        // Solve the "Hungry for Waffles Problem" when we have waffle houses
+        if (data.data.length > 0) {
+          const { route: calculatedRoute, totalDistance: calculatedDistance } =
+            solveHungryForWaffles(lat, lng, data.data);
+          setRoute(calculatedRoute);
+          setTotalDistance(calculatedDistance);
+        } else {
+          setRoute([]);
+          setTotalDistance(0);
+        }
       } else {
         throw new Error("Failed to fetch Waffle Houses");
       }
@@ -312,6 +398,22 @@ const WaffleMap: React.FC = () => {
             ) : null}
           </div>
 
+          {/* Route Information */}
+          {route.length > 0 && (
+            <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
+              <h3 className="font-semibold text-blue-800 mb-2">
+                🍳 Hungry for Waffles Route
+              </h3>
+              <div className="text-sm text-blue-700 space-y-1">
+                <div>📍 {route.length} stops</div>
+                <div>🛣️ Total distance: {totalDistance.toFixed(1)} miles</div>
+                <div className="text-xs text-blue-600 mt-2">
+                  Route follows greedy nearest-neighbor algorithm
+                </div>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="text-red-600 text-sm bg-red-50 p-2 rounded">
               {error}
@@ -390,42 +492,94 @@ const WaffleMap: React.FC = () => {
         )}
 
         {/* Waffle House Markers */}
-        {waffleHouses.map((waffleHouse) => (
-          <Marker
-            key={waffleHouse.id}
-            position={[waffleHouse.latitude, waffleHouse.longitude]}
-            icon={
-              new L.Icon({
-                iconUrl:
-                  "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-                iconRetinaUrl:
-                  "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-                shadowUrl:
-                  "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41],
-              })
-            }
+        {waffleHouses.map((waffleHouse) => {
+          const routeIndex = route.findIndex((wh) => wh.id === waffleHouse.id);
+          const isInRoute = routeIndex !== -1;
+
+          return (
+            <Marker
+              key={waffleHouse.id}
+              position={[waffleHouse.latitude, waffleHouse.longitude]}
+              icon={
+                new L.Icon({
+                  iconUrl:
+                    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+                  iconRetinaUrl:
+                    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+                  shadowUrl:
+                    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+                  iconSize: [25, 41],
+                  iconAnchor: [12, 41],
+                  popupAnchor: [1, -34],
+                  shadowSize: [41, 41],
+                })
+              }
+            >
+              <Popup>
+                <div>
+                  <h3 className="font-semibold text-lg">
+                    {waffleHouse.business_name}
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Store #{waffleHouse.store_code}
+                  </p>
+                  {isInRoute && (
+                    <p className="text-sm font-medium text-blue-600 mb-1">
+                      🍳 Stop #{routeIndex + 1} on route
+                    </p>
+                  )}
+                  <p className="text-sm">{waffleHouse.address}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {waffleHouse.latitude.toFixed(6)},{" "}
+                    {waffleHouse.longitude.toFixed(6)}
+                  </p>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
+
+        {/* Route Polyline */}
+        {route.length > 0 && userLocation && (
+          <Polyline
+            positions={[
+              [userLocation.lat, userLocation.lng],
+              ...route.map(
+                (wh) => [wh.latitude, wh.longitude] as [number, number]
+              ),
+            ]}
+            pathOptions={{
+              color: "red",
+              weight: 3,
+              opacity: 0.8,
+              dashArray: "5, 10",
+            }}
           >
             <Popup>
               <div>
                 <h3 className="font-semibold text-lg">
-                  {waffleHouse.business_name}
+                  🍳 Hungry for Waffles Route
                 </h3>
                 <p className="text-sm text-gray-600 mb-2">
-                  Store #{waffleHouse.store_code}
+                  Optimal route visiting all {route.length} Waffle Houses
                 </p>
-                <p className="text-sm">{waffleHouse.address}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {waffleHouse.latitude.toFixed(6)},{" "}
-                  {waffleHouse.longitude.toFixed(6)}
+                <p className="text-sm font-medium">
+                  Total Distance: {totalDistance.toFixed(1)} miles
                 </p>
+                <div className="text-xs text-gray-500 mt-2">
+                  <p>Route order:</p>
+                  <ol className="list-decimal list-inside mt-1">
+                    {route.map((wh, index) => (
+                      <li key={wh.id} className="truncate">
+                        {index + 1}. {wh.business_name}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
               </div>
             </Popup>
-          </Marker>
-        ))}
+          </Polyline>
+        )}
       </MapContainer>
     </div>
   );
