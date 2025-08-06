@@ -43,6 +43,7 @@ interface ORSVehicle {
   id: number;
   start: [number, number]; // [lng, lat]
   return_to_depot: boolean;
+  profile?: string; // Optional profile for OpenRouteService (defaults to "car" in VROOM)
 }
 
 interface ORSOptimizationRequest {
@@ -142,7 +143,8 @@ const getOptimizedWaffleRoute = async (
     {
       id: 1,
       start: [start[1], start[0]] as [number, number], // Convert [lat, lng] to [lng, lat]
-      return_to_depot: true,
+      return_to_depot: false,
+      profile: "driving-car", // Explicitly set the profile for OpenRouteService
     },
   ];
 
