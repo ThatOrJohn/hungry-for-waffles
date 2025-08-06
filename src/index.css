@@ -67,6 +67,15 @@
   background: #2563eb;
 }
 
+/* Custom radius slider marker styles */
+.radius-slider-marker {
+  transition: all 0.2s ease-in-out;
+}
+
+.radius-slider-marker:hover {
+  transform: scale(1.1);
+}
+
 /* Smooth transitions for mobile bottom sheet */
 .transition-all {
   transition-property: all;

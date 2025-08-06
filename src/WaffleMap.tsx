@@ -422,6 +422,68 @@ const RouteDetailsCard: React.FC<{
   );
 };
 
+// Custom Radius Slider Component
+const RadiusSlider: React.FC<{
+  value: number;
+  onChange: (value: RadiusOption) => void;
+}> = ({ value, onChange }) => {
+  // Define the key radius values and their positions
+  const radiusValues = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = Number(e.target.value) as RadiusOption;
+    onChange(newValue);
+  };
+
+  const handleMarkerClick = (radiusValue: number) => {
+    onChange(radiusValue as RadiusOption);
+  };
+
+  return (
+    <div className="relative">
+      <input
+        type="range"
+        min="1"
+        max="50"
+        step="1"
+        value={value}
+        onChange={handleSliderChange}
+        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider relative z-10"
+      />
+
+      {/* Clickable markers for key values */}
+      <div className="absolute top-0 left-0 right-0 h-2 pointer-events-none">
+        <div className="relative h-full">
+          {radiusValues.map((radiusValue) => {
+            const position = ((radiusValue - 1) / 49) * 100; // Convert to percentage
+            return (
+              <button
+                key={radiusValue}
+                onClick={() => handleMarkerClick(radiusValue)}
+                className={`absolute w-3 h-3 -mt-0.5 -ml-1.5 rounded-full border-2 border-white shadow-sm transition-all ${
+                  value >= radiusValue
+                    ? "bg-blue-500 hover:bg-blue-600"
+                    : "bg-gray-300 hover:bg-gray-400"
+                } pointer-events-auto`}
+                style={{ left: `${position}%` }}
+                title={`${radiusValue} mile${radiusValue === 1 ? "" : "s"}`}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Labels for key values */}
+      <div className="flex justify-between text-xs text-gray-500 mt-3">
+        <span>1 mi</span>
+        <span>10 mi</span>
+        <span>25 mi</span>
+        <span>50 mi</span>
+      </div>
+    </div>
+  );
+};
+
 const WaffleMap: React.FC = () => {
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -806,25 +868,10 @@ const WaffleMap: React.FC = () => {
                   {selectedRadius === 1 ? "" : "s"}
                 </label>
               </div>
-              <div className="relative">
-                <input
-                  type="range"
-                  min="1"
-                  max="50"
-                  step="1"
-                  value={selectedRadius}
-                  onChange={(e) =>
-                    setSelectedRadius(Number(e.target.value) as RadiusOption)
-                  }
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>1 mi</span>
-                  <span>10 mi</span>
-                  <span>25 mi</span>
-                  <span>50 mi</span>
-                </div>
-              </div>
+              <RadiusSlider
+                value={selectedRadius}
+                onChange={setSelectedRadius}
+              />
             </div>
           )}
 
